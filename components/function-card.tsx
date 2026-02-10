@@ -1,7 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 interface FunctionCardProps {
   title: string;
@@ -20,25 +26,42 @@ export function FunctionCard({
   href,
   iconColor = "#0D9488",
 }: FunctionCardProps) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 640;
+
   return (
-    <View style={styles.card}>
+    <View style={isMobile ? styles.cardMobile : styles.card}>
       {/* Icon */}
       <View
-        style={{ ...styles.iconContainer, backgroundColor: `${iconColor}15` }}
+        style={
+          isMobile
+            ? {
+                ...styles.iconContainerMobile,
+                backgroundColor: `${iconColor}15`,
+              }
+            : { ...styles.iconContainer, backgroundColor: `${iconColor}15` }
+        }
       >
-        <Ionicons name={iconName} size={45} color={iconColor} />
+        <Ionicons name={iconName} size={isMobile ? 36 : 45} color={iconColor} />
       </View>
 
       {/* Title */}
-      <Text style={styles.cardTitle}>{title}</Text>
+      <Text style={isMobile ? styles.cardTitleMobile : styles.cardTitle}>
+        {title}
+      </Text>
 
       {/* Description */}
-      <Text style={styles.cardDescription}>{description}</Text>
+      <Text
+        style={isMobile ? styles.cardDescriptionMobile : styles.cardDescription}
+      >
+        {description}
+      </Text>
 
       {/* Button */}
       <Link href={href as any} asChild>
         <TouchableOpacity
           style={{ ...styles.cardButton, backgroundColor: iconColor }}
+          activeOpacity={0.8}
         >
           <Text style={styles.cardButtonText}>{buttonText}</Text>
         </TouchableOpacity>
@@ -58,6 +81,15 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     margin: 15,
   },
+  cardMobile: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    marginBottom: 14,
+  },
 
   iconContainer: {
     width: 90,
@@ -67,6 +99,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 25,
   },
+  iconContainerMobile: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
 
   cardTitle: {
     fontSize: 22,
@@ -74,6 +114,13 @@ const styles = StyleSheet.create({
     color: "#0D4C73",
     textAlign: "center",
     marginBottom: 15,
+  },
+  cardTitleMobile: {
+    fontSize: 19,
+    fontWeight: "bold",
+    color: "#0D4C73",
+    textAlign: "center",
+    marginBottom: 10,
   },
 
   cardDescription: {
@@ -83,6 +130,14 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 30,
     paddingHorizontal: 10,
+  },
+  cardDescriptionMobile: {
+    fontSize: 13,
+    color: "#5A8CA8",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
 
   cardButton: {
@@ -99,5 +154,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-
 export default FunctionCard;

@@ -2,9 +2,18 @@ import { FunctionCard } from "@/components/function-card";
 import { GradientBackground } from "@/components/gradient-background";
 import { Header } from "@/components/header";
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 export default function HomeScreen() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 640;
+
   return (
     <GradientBackground>
       <ScrollView
@@ -16,17 +25,29 @@ export default function HomeScreen() {
         <Header />
 
         {/* Main Content */}
-        <View style={styles.mainContent}>
+        <View style={isMobile ? styles.mainContentMobile : styles.mainContent}>
           {/* Welcome Section */}
           <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeTitle}>ยินดีต้อนรับ</Text>
-            <Text style={styles.welcomeSubtitle}>
+            <Text
+              style={isMobile ? styles.welcomeTitleMobile : styles.welcomeTitle}
+            >
+              ยินดีต้อนรับ
+            </Text>
+            <Text
+              style={
+                isMobile ? styles.welcomeSubtitleMobile : styles.welcomeSubtitle
+              }
+            >
               ระบบตรวจสอบและทดลองการผสมยาอัจฉริยะ
             </Text>
           </View>
 
           {/* Function Cards */}
-          <View style={styles.cardsContainer}>
+          <View
+            style={
+              isMobile ? styles.cardsContainerMobile : styles.cardsContainer
+            }
+          >
             <FunctionCard
               title="ทดลองการผสมยา"
               description="ทดลองผสมยาหลายชนิดเข้าด้วยกัน เพื่อตรวจสอบปฏิกิริยาระหว่างยา และความปลอดภัยในการใช้ยาร่วมกัน"
@@ -73,6 +94,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 120,
     paddingTop: 40,
   },
+  mainContentMobile: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 24,
+  },
 
   welcomeSection: {
     alignItems: "center",
@@ -85,11 +111,23 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 10,
   },
+  welcomeTitleMobile: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
 
   welcomeSubtitle: {
     fontSize: 18,
     color: "rgba(255, 255, 255, 0.9)",
     textAlign: "center",
+  },
+  welcomeSubtitleMobile: {
+    fontSize: 15,
+    color: "rgba(255, 255, 255, 0.9)",
+    textAlign: "center",
+    paddingHorizontal: 10,
   },
 
   cardsContainer: {
@@ -98,6 +136,11 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
     flexWrap: "wrap",
     paddingBottom: 40,
+  },
+  cardsContainerMobile: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    paddingBottom: 30,
   },
 
   footer: {
