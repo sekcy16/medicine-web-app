@@ -522,6 +522,19 @@ function ResultView({
       {/* Status */}
       <StatusBadge status={result.status} isMobile={isMobile} />
 
+      {/* Nursing Care */}
+      <View style={styles.resultSection}>
+        <View style={styles.resultSectionHeader}>
+          <View
+            style={[styles.sectionIconCircle, { backgroundColor: "#FCE7F3" }]}
+          >
+            <Ionicons name="heart" size={18} color="#EC4899" />
+          </View>
+          <Text style={styles.resultSectionTitle}>สารน้ำที่ใช้ได้</Text>
+        </View>
+        <Text style={styles.resultSectionContent}>{result.nursingCare}</Text>
+      </View>
+
       {/* Precautions */}
       <View style={styles.resultSection}>
         <View style={styles.resultSectionHeader}>
@@ -534,20 +547,6 @@ function ResultView({
         </View>
         <Text style={styles.resultSectionContent}>{result.precautions}</Text>
       </View>
-
-      {/* Nursing Care */}
-      <View style={styles.resultSection}>
-        <View style={styles.resultSectionHeader}>
-          <View
-            style={[styles.sectionIconCircle, { backgroundColor: "#FCE7F3" }]}
-          >
-            <Ionicons name="heart" size={18} color="#EC4899" />
-          </View>
-          <Text style={styles.resultSectionTitle}>การดูแลทางการพยาบาล</Text>
-        </View>
-        <Text style={styles.resultSectionContent}>{result.nursingCare}</Text>
-      </View>
-
       {/* Action Buttons */}
       <View
         style={[styles.resultActions, isMobile && styles.resultActionsMobile]}
