@@ -304,8 +304,8 @@ function StatusBadge({
       iconBg: "#D1FAE5",
     },
     limited_data: {
-      label: "Limited Data / Caution",
-      labelThai: "ข้อมูลจำกัด / ควรระวัง",
+      label: "NO DATA",
+      labelThai: "ข้อมูลจำกัด",
       description: "ควรระมัดระวังเป็นพิเศษ อาจมีปฏิกิริยาระหว่างยา",
       icon: "alert-circle" as const,
       bg: "#FFFBEB",
@@ -322,6 +322,16 @@ function StatusBadge({
       color: "#DC2626",
       border: "#FECACA",
       iconBg: "#FEE2E2",
+    },
+    caution: {
+      label: "Caution",
+      labelThai: "ควรระวัง",
+      description: "",//"ผสมได้ในบางความเข้มข้น ควรตรวจสอบขนาดยาก่อนใช้ร่วมกัน",
+      icon: "warning" as const,
+      bg: "#FFF7ED",
+      color: "#EA580C",
+      border: "#FED7AA",
+      iconBg: "#FFEDD5",
     },
   };
 

@@ -30,6 +30,7 @@ function useResponsive() {
 // ===================== Helper: group drugs by compatibility =====================
 interface CompatibilityGroup {
   compatible: Drug[];
+  caution: Drug[];
   limited_data: Drug[];
   incompatible: Drug[];
 }
@@ -37,6 +38,7 @@ interface CompatibilityGroup {
 function getCompatibilityGroups(selectedDrugId: string): CompatibilityGroup {
   const groups: CompatibilityGroup = {
     compatible: [],
+    caution: [],
     limited_data: [],
     incompatible: [],
   };
@@ -71,6 +73,7 @@ function getCompatibilityGroups(selectedDrugId: string): CompatibilityGroup {
 
   // Sort ทุกกลุ่ม A-Z
   groups.compatible.sort((a, b) => a.name.localeCompare(b.name));
+  groups.caution.sort((a, b) => a.name.localeCompare(b.name));
   groups.limited_data.sort((a, b) => a.name.localeCompare(b.name));
   groups.incompatible.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -106,11 +109,18 @@ function StatusSection({
       icon: "checkmark-circle" as const,
     },
     limited_data: {
-      label: "LIMITED DATA / CAUTION",
+      label: "NO DATA",
       labelThai: "ข้อมูลจำกัด / ควรระวัง",
       bg: "#FDE68A",
       color: "#92400E",
       icon: "alert-circle" as const,
+    },
+    caution: {
+      label: "CAUTION",
+      labelThai: "ควรระวัง",
+      bg: "#FED7AA",
+      color: "#9A3412",
+      icon: "warning" as const,
     },
     incompatible: {
       label: "INCOMPATIBLE",
@@ -336,6 +346,13 @@ export default function DrugInfoScreen() {
                     <StatusSection
                       status="compatible"
                       drugs={compatibilityGroups.compatible}
+                      isMobile={isMobile}
+                    />
+
+                    {/* Caution Section */}
+                    <StatusSection
+                      status="caution"
+                      drugs={compatibilityGroups.caution}
                       isMobile={isMobile}
                     />
 
