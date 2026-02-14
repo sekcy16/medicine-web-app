@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link, usePathname } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -24,6 +23,7 @@ const navItems: NavItem[] = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const isMobile = width < 700;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -31,8 +31,12 @@ export function Header() {
   return (
     <View style={isMobile ? styles.headerMobile : styles.header}>
       {/* Logo และชื่อแอป */}
-      <View style={styles.logoSection}>
-        <View
+      <TouchableOpacity
+        style={styles.logoSection}
+        activeOpacity={0.8}
+        onPress={() => router.push("/")}
+      >
+        {/* <View
           style={isMobile ? styles.logoContainerMobile : styles.logoContainer}
         >
           <Image
@@ -42,11 +46,11 @@ export function Header() {
             style={isMobile ? styles.logoImageMobile : styles.logoImage}
             resizeMode="contain"
           />
-        </View>
+        </View> */}
         <Text style={isMobile ? styles.appTitleMobile : styles.appTitle}>
           MediMix
         </Text>
-      </View>
+      </TouchableOpacity>
 
       {/* Desktop Navigation */}
       {!isMobile && (
@@ -57,18 +61,19 @@ export function Header() {
               (item.href === "/" && pathname === "/(tabs)");
 
             return (
-              <Link key={index} href={item.href as any} asChild>
-                <TouchableOpacity
-                  style={isActive ? styles.navItemActive : styles.navItem}
-                  activeOpacity={0.7}
+              <TouchableOpacity
+                key={index}
+                style={[styles.navItem, isActive && styles.navItemActive]}
+                activeOpacity={0.7}
+                onPress={() => router.push(item.href as any)}
+              >
+                <Text
+                  style={[styles.navText, isActive && styles.navTextActive]}
                 >
-                  <Text
-                    style={isActive ? styles.navTextActive : styles.navText}
-                  >
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              </Link>
+                  {item.title}
+                </Text>
+                {isActive && <View style={styles.navActiveIndicator} />}
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -83,7 +88,7 @@ export function Header() {
         >
           <Ionicons
             name={menuOpen ? "close" : "menu"}
-            size={22}
+            size={24}
             color="#FFFFFF"
           />
         </TouchableOpacity>
@@ -98,28 +103,33 @@ export function Header() {
               (item.href === "/" && pathname === "/(tabs)");
 
             return (
-              <Link key={index} href={item.href as any} asChild>
-                <TouchableOpacity
-                  style={
-                    isActive
-                      ? styles.mobileMenuItemActive
-                      : styles.mobileMenuItem
-                  }
-                  onPress={() => setMenuOpen(false)}
-                  activeOpacity={0.7}
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.mobileMenuItem,
+                  isActive && styles.mobileMenuItemActive,
+                ]}
+                onPress={() => {
+                  setMenuOpen(false);
+                  router.push(item.href as any);
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={item.icon}
+                  size={18}
+                  color={isActive ? "#0D9488" : "#6B7280"}
+                  style={{ marginRight: 12 }}
+                />
+                <Text
+                  style={[
+                    styles.mobileMenuText,
+                    isActive && styles.mobileMenuTextActive,
+                  ]}
                 >
-                  {isActive && <View style={styles.activeBar} />}
-                  <Text
-                    style={
-                      isActive
-                        ? styles.mobileMenuTextActive
-                        : styles.mobileMenuText
-                    }
-                  >
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              </Link>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -133,9 +143,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 30,
+    paddingHorizontal: 40,
     paddingTop: 20,
     paddingBottom: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.15)",
   },
   headerMobile: {
     flexDirection: "row",
@@ -147,6 +160,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     position: "relative",
     zIndex: 100,
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.15)",
   },
 
   logoSection: {
@@ -155,128 +171,122 @@ const styles = StyleSheet.create({
   },
 
   logoContainer: {
-    width: 60,
-    height: 60,
+    width: 48,
+    height: 48,
     borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  logoContainerMobile: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
   },
+  logoContainerMobile: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
   logoImage: {
-    width: 67,
-    height: 67,
+    width: 48,
+    height: 48,
   },
   logoImageMobile: {
-    width: 50,
-    height: 50,
+    width: 42,
+    height: 42,
   },
 
   appTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 22,
+    fontWeight: "800",
     color: "#FFFFFF",
-    letterSpacing: 1,
-    paddingLeft: 10,
+    letterSpacing: 0.5,
   },
   appTitleMobile: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "800",
     color: "#FFFFFF",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
 
   navMenu: {
     flexDirection: "row",
+    alignItems: "center",
   },
 
   navItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    marginLeft: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    alignItems: "center",
+    marginLeft: 4,
   },
   navItemActive: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    backgroundColor: "rgba(255, 255, 255, 0.35)",
-    marginLeft: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
   },
 
   navText: {
-    color: "#FFFFFF",
+    color: "rgba(255, 255, 255, 0.75)",
     fontSize: 15,
     fontWeight: "500",
   },
   navTextActive: {
-    color: "#000000",
-    fontSize: 15,
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  navActiveIndicator: {
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#FFFFFF",
+    marginTop: 4,
   },
 
   // Hamburger Button
   hamburgerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
 
   // Mobile Dropdown Menu
   mobileMenu: {
     width: "100%",
-    backgroundColor: "rgb(255, 255, 255)",
-    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   mobileMenuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 13,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     marginBottom: 2,
   },
   mobileMenuItemActive: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 13,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    marginBottom: 2,
     backgroundColor: "#F0FDFA",
   },
   mobileMenuText: {
-    color: "#1F2937",
+    color: "#6B7280",
     fontSize: 15,
     fontWeight: "500",
     flex: 1,
   },
   mobileMenuTextActive: {
-    color: "#111827",
-    fontSize: 15,
-    fontWeight: "bold",
-    flex: 1,
-  },
-  activeBar: {
-    width: 4,
-    height: 25,
-    borderRadius: 2,
-    backgroundColor: "#0D9488",
-    marginRight: 12,
+    color: "#0D9488",
+    fontWeight: "700",
   },
 });
 

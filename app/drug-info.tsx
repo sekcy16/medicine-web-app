@@ -8,8 +8,10 @@ import {
 } from "@/data/drug-mixing-data";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,6 +27,45 @@ function useResponsive() {
   const isMobile = width < 640;
   const isTablet = width >= 640 && width < 1024;
   return { width, isMobile, isTablet };
+}
+
+// ===================== FadeInView Component =====================
+function FadeInView({
+  delay = 0,
+  children,
+  style,
+}: {
+  delay?: number;
+  children: React.ReactNode;
+  style?: any;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(25)).current;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 600,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [opacity, translateY, delay]);
+
+  return (
+    <Animated.View style={[{ opacity, transform: [{ translateY }] }, style]}>
+      {children}
+    </Animated.View>
+  );
 }
 
 // ===================== Helper: group drugs by compatibility =====================
@@ -43,7 +84,6 @@ function getCompatibilityGroups(selectedDrugId: string): CompatibilityGroup {
     incompatible: [],
   };
 
-  // หายาอื่นทั้งหมดที่มีข้อมูลการผสมกับยานี้
   const knownDrugIds = new Set<string>();
 
   for (const result of mixingResults) {
@@ -64,14 +104,12 @@ function getCompatibilityGroups(selectedDrugId: string): CompatibilityGroup {
     }
   }
 
-  // ยาที่ไม่มีข้อมูล → limited_data
   for (const drug of drugList) {
     if (drug.id !== selectedDrugId && !knownDrugIds.has(drug.id)) {
       groups.limited_data.push(drug);
     }
   }
 
-  // Sort ทุกกลุ่ม A-Z
   groups.compatible.sort((a, b) => a.name.localeCompare(b.name));
   groups.caution.sort((a, b) => a.name.localeCompare(b.name));
   groups.limited_data.sort((a, b) => a.name.localeCompare(b.name));
@@ -80,12 +118,99 @@ function getCompatibilityGroups(selectedDrugId: string): CompatibilityGroup {
   return groups;
 }
 
+// ===================== Status Config =====================
+const statusConfig = {
+  compatible: {
+    label: "COMPATIBLE",
+    labelThai: "ผสมได้",
+    barBg: "#059669",
+    color: "#059669",
+    badgeBg: "#A7F3D0",
+    icon: "checkmark-circle" as const,
+    bg: "#ECFDF5",
+    borderColor: "#A7F3D0",
+  },
+  caution: {
+    label: "CAUTION",
+    labelThai: "ควรระวัง",
+    barBg: "#D97706",
+    color: "#D97706",
+    badgeBg: "#FED7AA",
+    icon: "warning" as const,
+    bg: "#FFF7ED",
+    borderColor: "#FED7AA",
+  },
+  limited_data: {
+    label: "NO DATA",
+    labelThai: "ข้อมูลจำกัด",
+    barBg: "#6B7280",
+    color: "#92400E",
+    badgeBg: "#FDE68A",
+    icon: "help-circle" as const,
+    bg: "#FFFBEB",
+    borderColor: "#FDE68A",
+  },
+  incompatible: {
+    label: "INCOMPATIBLE",
+    labelThai: "ห้ามผสม",
+    barBg: "#DC2626",
+    color: "#DC2626",
+    badgeBg: "#FCA5A5",
+    icon: "close-circle" as const,
+    bg: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+};
+
 // ===================== DrugBar Component =====================
-function DrugBar({ drug }: { drug: Drug }) {
+function DrugBar({
+  drug,
+  status,
+}: {
+  drug: Drug;
+  status: CompatibilityStatus;
+}) {
+  const c = statusConfig[status];
   return (
-    <View style={styles.drugBar}>
-      <Text style={styles.drugBarName}>{drug.name}</Text>
-      <Text style={styles.drugBarThai}>{drug.thaiName}</Text>
+    <View style={[styles.drugBar, { backgroundColor: c.barBg }]}>
+      <View>
+        <Text style={styles.drugBarName}>{drug.name}</Text>
+        <Text style={styles.drugBarThai}>{drug.thaiName}</Text>
+      </View>
+      <Ionicons name={c.icon} size={18} color="rgba(255,255,255,0.7)" />
+    </View>
+  );
+}
+
+// ===================== SummaryStats Component =====================
+function SummaryStats({ groups }: { groups: CompatibilityGroup }) {
+  const stats = [
+    { key: "compatible" as const, count: groups.compatible.length },
+    { key: "caution" as const, count: groups.caution.length },
+    { key: "limited_data" as const, count: groups.limited_data.length },
+    { key: "incompatible" as const, count: groups.incompatible.length },
+  ];
+
+  return (
+    <View style={styles.summaryRow}>
+      {stats.map((s) => {
+        const c = statusConfig[s.key];
+        return (
+          <View
+            key={s.key}
+            style={[
+              styles.summaryItem,
+              { backgroundColor: c.bg, borderColor: c.borderColor },
+            ]}
+          >
+            <Ionicons name={c.icon} size={16} color={c.color} />
+            <Text style={[styles.summaryCount, { color: c.color }]}>
+              {s.count}
+            </Text>
+            <Text style={styles.summaryLabel}>{c.labelThai}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -94,64 +219,58 @@ function DrugBar({ drug }: { drug: Drug }) {
 function StatusSection({
   status,
   drugs,
-  isMobile,
+  delay = 0,
 }: {
   status: CompatibilityStatus;
   drugs: Drug[];
-  isMobile?: boolean;
+  delay?: number;
 }) {
-  const config = {
-    compatible: {
-      label: "COMPATIBLE",
-      labelThai: "ผสมได้",
-      bg: "#A7F3D0",
-      color: "#065F46",
-      icon: "checkmark-circle" as const,
-    },
-    limited_data: {
-      label: "NO DATA",
-      labelThai: "ข้อมูลจำกัด / ควรระวัง",
-      bg: "#FDE68A",
-      color: "#92400E",
-      icon: "alert-circle" as const,
-    },
-    caution: {
-      label: "CAUTION",
-      labelThai: "ควรระวัง",
-      bg: "#FED7AA",
-      color: "#9A3412",
-      icon: "warning" as const,
-    },
-    incompatible: {
-      label: "INCOMPATIBLE",
-      labelThai: "ห้ามผสม",
-      bg: "#FCA5A5",
-      color: "#991B1B",
-      icon: "close-circle" as const,
-    },
-  };
-
-  const c = config[status];
+  const c = statusConfig[status];
 
   return (
-    <View style={styles.statusSection}>
-      {/* Status Badge */}
-      <View style={{ ...styles.statusBadge, backgroundColor: c.bg }}>
-        <Ionicons name={c.icon} size={18} color={c.color} />
-        <Text style={{ ...styles.statusBadgeText, color: c.color }}>
-          {c.label}
-        </Text>
-      </View>
-
-      {/* Drug Bars */}
-      {drugs.length > 0 ? (
-        drugs.map((drug) => <DrugBar key={drug.id} drug={drug} />)
-      ) : (
-        <View style={styles.emptySection}>
-          <Text style={styles.emptySectionText}>ไม่มียาในกลุ่มนี้</Text>
+    <FadeInView delay={delay}>
+      <View style={styles.statusSection}>
+        {/* Section Header */}
+        <View style={[styles.statusHeader, { borderLeftColor: c.color }]}>
+          <View style={styles.statusHeaderLeft}>
+            <Ionicons
+              name={c.icon}
+              size={20}
+              color={c.color}
+              style={{ marginRight: 8 }}
+            />
+            <View>
+              <Text style={[styles.statusHeaderLabel, { color: c.color }]}>
+                {c.label}
+              </Text>
+              <Text style={styles.statusHeaderThai}>{c.labelThai}</Text>
+            </View>
+          </View>
+          <View style={[styles.countBadge, { backgroundColor: c.badgeBg }]}>
+            <Text style={[styles.countBadgeText, { color: c.color }]}>
+              {drugs.length}
+            </Text>
+          </View>
         </View>
-      )}
-    </View>
+
+        {/* Drug Bars */}
+        {drugs.length > 0 ? (
+          drugs.map((drug) => (
+            <DrugBar key={drug.id} drug={drug} status={status} />
+          ))
+        ) : (
+          <View style={styles.emptySection}>
+            <Ionicons
+              name="remove-circle-outline"
+              size={16}
+              color="#9CA3AF"
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.emptySectionText}>ไม่มียาในกลุ่มนี้</Text>
+          </View>
+        )}
+      </View>
+    </FadeInView>
   );
 }
 
@@ -174,7 +293,7 @@ export default function DrugInfoScreen() {
     return getCompatibilityGroups(selectedDrug.id);
   }, [selectedDrug]);
 
-  const contentPadding = isMobile ? 16 : isTablet ? 40 : 30;
+  const contentPadding = isMobile ? 12 : isTablet ? 24 : 120;
 
   const handleSelectDrug = (drug: Drug) => {
     setSelectedDrug(drug);
@@ -198,24 +317,26 @@ export default function DrugInfoScreen() {
 
         <View style={[styles.content, { paddingHorizontal: contentPadding }]}>
           {/* Page Title + Back Button */}
-          <View style={styles.pageHeader}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.push("/")}
-            >
-              <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
-            </TouchableOpacity>
-            <View>
-              <Text
-                style={[styles.pageTitle, isMobile && styles.pageTitleMobile]}
+          <FadeInView delay={100}>
+            <View style={styles.pageHeader}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.push("/")}
               >
-                เช็คข้อมูลชนิดยา
-              </Text>
-              <Text style={styles.pageSubtitle}>
-                ดูความเข้ากันได้ของยาแต่ละชนิด
-              </Text>
+                <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[styles.pageTitle, isMobile && styles.pageTitleMobile]}
+                >
+                  เช็คข้อมูลชนิดยา
+                </Text>
+                <Text style={styles.pageSubtitle}>
+                  ดูความเข้ากันได้ของยาแต่ละชนิดกับยาอื่น ๆ ในฐานข้อมูล
+                </Text>
+              </View>
             </View>
-          </View>
+          </FadeInView>
 
           <View
             style={[
@@ -223,169 +344,262 @@ export default function DrugInfoScreen() {
               isMobile && styles.mainContainerMobile,
             ]}
           >
-            {/* Search Section — hide on mobile when showing details */}
+            {/* Search Section */}
             {(!isMobile || !showDetails) && (
-              <View
-                style={[
-                  styles.searchSection,
-                  isMobile && styles.searchSectionMobile,
-                  isTablet && styles.searchSectionTablet,
-                ]}
+              <FadeInView
+                delay={250}
+                style={isMobile ? undefined : { flexShrink: 0 }}
               >
-                <Text style={styles.sectionTitle}>ค้นหายา</Text>
-                <View style={styles.searchInputContainer}>
-                  <Ionicons name="search" size={20} color="#6B7280" />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="พิมพ์ชื่อยา..."
-                    placeholderTextColor="#9CA3AF"
-                    value={searchText}
-                    onChangeText={setSearchText}
-                  />
-                  {searchText.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchText("")}>
-                      <Ionicons name="close-circle" size={20} color="#9CA3AF" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {/* Drug List */}
-                <ScrollView
+                <View
                   style={[
-                    styles.drugListScroll,
-                    isMobile && styles.drugListScrollMobile,
+                    styles.searchSection,
+                    isMobile && styles.searchSectionMobile,
+                    isTablet && styles.searchSectionTablet,
                   ]}
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator
                 >
-                  {filteredDrugs.map((drug) => (
-                    <TouchableOpacity
-                      key={drug.id}
-                      style={
-                        selectedDrug?.id === drug.id
-                          ? { ...styles.drugItem, ...styles.drugItemActive }
-                          : styles.drugItem
-                      }
-                      onPress={() => handleSelectDrug(drug)}
-                    >
-                      <View style={styles.drugItemContent}>
-                        <Text
-                          style={
-                            selectedDrug?.id === drug.id
-                              ? {
-                                  ...styles.drugItemName,
-                                  ...styles.drugItemNameActive,
-                                }
-                              : styles.drugItemName
-                          }
-                        >
-                          {drug.name}
+                  {/* Search Header */}
+                  <View style={styles.searchHeader}>
+                    <Ionicons
+                      name="list"
+                      size={20}
+                      color="#0D4C73"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text style={styles.sectionTitle}>รายการยา</Text>
+                    <View style={styles.drugCountChip}>
+                      <Text style={styles.drugCountText}>
+                        {filteredDrugs.length}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.searchInputContainer}>
+                    <Ionicons name="search" size={18} color="#0D9488" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="พิมพ์ชื่อยาเพื่อค้นหา..."
+                      placeholderTextColor="#9CA3AF"
+                      value={searchText}
+                      onChangeText={setSearchText}
+                    />
+                    {searchText.length > 0 && (
+                      <TouchableOpacity onPress={() => setSearchText("")}>
+                        <Ionicons
+                          name="close-circle"
+                          size={20}
+                          color="#9CA3AF"
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Drug List */}
+                  <ScrollView
+                    style={[
+                      styles.drugListScroll,
+                      isMobile && styles.drugListScrollMobile,
+                    ]}
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator
+                  >
+                    {filteredDrugs.length === 0 ? (
+                      <View style={styles.noResultBox}>
+                        <Ionicons
+                          name="search-outline"
+                          size={32}
+                          color="#D1D5DB"
+                        />
+                        <Text style={styles.noResultText}>ไม่พบยาที่ค้นหา</Text>
+                        <Text style={styles.noResultHint}>
+                          ลองพิมพ์ชื่อภาษาอังกฤษหรือไทย
                         </Text>
-                        <Text style={styles.drugItemThai}>{drug.thaiName}</Text>
                       </View>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={20}
-                        color={
-                          selectedDrug?.id === drug.id ? "#3B82F6" : "#9CA3AF"
-                        }
-                      />
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
+                    ) : (
+                      filteredDrugs.map((drug) => {
+                        const isActive = selectedDrug?.id === drug.id;
+                        return (
+                          <TouchableOpacity
+                            key={drug.id}
+                            style={[
+                              styles.drugItem,
+                              isActive && styles.drugItemActive,
+                            ]}
+                            onPress={() => handleSelectDrug(drug)}
+                            activeOpacity={0.7}
+                          >
+                            <View
+                              style={[
+                                styles.drugItemDot,
+                                isActive && styles.drugItemDotActive,
+                              ]}
+                            />
+                            <View style={styles.drugItemContent}>
+                              <Text
+                                style={[
+                                  styles.drugItemName,
+                                  isActive && styles.drugItemNameActive,
+                                ]}
+                              >
+                                {drug.name}
+                              </Text>
+                              <Text style={styles.drugItemThai}>
+                                {drug.thaiName}
+                              </Text>
+                            </View>
+                            <Ionicons
+                              name="chevron-forward"
+                              size={18}
+                              color={isActive ? "#0D9488" : "#D1D5DB"}
+                            />
+                          </TouchableOpacity>
+                        );
+                      })
+                    )}
+                  </ScrollView>
+                </View>
+              </FadeInView>
             )}
 
             {/* Compatibility Details */}
             {(!isMobile || showDetails) && (
-              <View
-                style={[
-                  styles.detailsSection,
-                  isMobile && styles.detailsSectionMobile,
-                ]}
-              >
-                {selectedDrug && compatibilityGroups ? (
-                  <ScrollView
-                    nestedScrollEnabled
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {/* Mobile Back Button */}
-                    {isMobile && (
-                      <TouchableOpacity
-                        style={styles.mobileBackButton}
-                        onPress={handleBackToList}
-                      >
-                        <Ionicons name="arrow-back" size={18} color="#0D9488" />
-                        <Text style={styles.mobileBackButtonText}>
-                          กลับไปเลือกยา
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-
-                    {/* Selected Drug Name Chip */}
-                    <View style={styles.selectedDrugChipRow}>
-                      <View
-                        style={[
-                          styles.selectedDrugChip,
-                          isMobile && styles.selectedDrugChipMobile,
-                        ]}
-                      >
-                        <Ionicons name="medkit" size={18} color="#0D9488" />
-                        <Text
-                          style={[
-                            styles.selectedDrugChipText,
-                            isMobile && styles.selectedDrugChipTextMobile,
-                          ]}
+              <FadeInView delay={400} style={{ flex: 1, minWidth: 0 }}>
+                <View
+                  style={[
+                    styles.detailsSection,
+                    isMobile && styles.detailsSectionMobile,
+                  ]}
+                >
+                  {selectedDrug && compatibilityGroups ? (
+                    <ScrollView
+                      nestedScrollEnabled
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {/* Mobile Back Button */}
+                      {isMobile && (
+                        <TouchableOpacity
+                          style={styles.mobileBackButton}
+                          onPress={handleBackToList}
+                          activeOpacity={0.7}
                         >
-                          {selectedDrug.name.toUpperCase()}
+                          <Ionicons
+                            name="arrow-back"
+                            size={18}
+                            color="#0D9488"
+                            style={{ marginRight: 6 }}
+                          />
+                          <Text style={styles.mobileBackButtonText}>
+                            กลับไปเลือกยา
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+
+                      {/* Selected Drug Chip */}
+                      <FadeInView delay={100}>
+                        <View style={styles.selectedDrugChipRow}>
+                          <View
+                            style={[
+                              styles.selectedDrugChip,
+                              isMobile && styles.selectedDrugChipMobile,
+                            ]}
+                          >
+                            <View style={styles.drugChipIcon}>
+                              <Ionicons
+                                name="medkit"
+                                size={20}
+                                color="#FFFFFF"
+                              />
+                            </View>
+                            <View style={{ marginLeft: 12 }}>
+                              <Text style={styles.selectedDrugChipLabel}>
+                                กำลังดูข้อมูลยา
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.selectedDrugChipText,
+                                  isMobile && styles.selectedDrugChipTextMobile,
+                                ]}
+                              >
+                                {selectedDrug.name}
+                              </Text>
+                              <Text style={styles.selectedDrugChipThai}>
+                                {selectedDrug.thaiName}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      </FadeInView>
+
+                      {/* Summary Stats */}
+                      <FadeInView delay={200}>
+                        <SummaryStats groups={compatibilityGroups} />
+                      </FadeInView>
+
+                      {/* Compatibility Sections */}
+                      <StatusSection
+                        status="compatible"
+                        drugs={compatibilityGroups.compatible}
+                        delay={300}
+                      />
+                      <StatusSection
+                        status="caution"
+                        drugs={compatibilityGroups.caution}
+                        delay={400}
+                      />
+                      <StatusSection
+                        status="limited_data"
+                        drugs={compatibilityGroups.limited_data}
+                        delay={500}
+                      />
+                      <StatusSection
+                        status="incompatible"
+                        drugs={compatibilityGroups.incompatible}
+                        delay={600}
+                      />
+
+                      {/* Disclaimer */}
+                      <FadeInView delay={700}>
+                        <View style={styles.disclaimerBox}>
+                          <Ionicons
+                            name="information-circle"
+                            size={16}
+                            color="#9CA3AF"
+                            style={{ marginRight: 6, marginTop: 1 }}
+                          />
+                          <Text style={styles.disclaimerText}>
+                            ข้อมูลนี้ใช้เพื่อการศึกษาเท่านั้น
+                            ควรปรึกษาเภสัชกรก่อนใช้ยาจริง
+                          </Text>
+                        </View>
+                      </FadeInView>
+                    </ScrollView>
+                  ) : (
+                    <View style={styles.emptyState}>
+                      <View style={styles.emptyIconCircle}>
+                        <Ionicons
+                          name="search"
+                          size={isMobile ? 36 : 44}
+                          color="#0D9488"
+                        />
+                      </View>
+                      <Text style={styles.emptyTitle}>
+                        เลือกยาเพื่อดูข้อมูล
+                      </Text>
+                      <Text style={styles.emptySubtext}>
+                        กรุณาเลือกยาจากรายการ
+                        {isMobile ? "ด้านบน" : "ด้านซ้าย"}
+                        {"\n"}
+                        เพื่อดูความเข้ากันได้กับยาอื่น
+                      </Text>
+                      <View style={styles.emptyHintRow}>
+                        <View style={styles.emptyHintDot} />
+                        <Text style={styles.emptyHintText}>
+                          มียาในฐานข้อมูลทั้งหมด {drugList.length} รายการ
                         </Text>
                       </View>
                     </View>
-
-                    {/* Compatible Section */}
-                    <StatusSection
-                      status="compatible"
-                      drugs={compatibilityGroups.compatible}
-                      isMobile={isMobile}
-                    />
-
-                    {/* Caution Section */}
-                    <StatusSection
-                      status="caution"
-                      drugs={compatibilityGroups.caution}
-                      isMobile={isMobile}
-                    />
-
-                    {/* Limited Data Section */}
-                    <StatusSection
-                      status="limited_data"
-                      drugs={compatibilityGroups.limited_data}
-                      isMobile={isMobile}
-                    />
-
-                    {/* Incompatible Section */}
-                    <StatusSection
-                      status="incompatible"
-                      drugs={compatibilityGroups.incompatible}
-                      isMobile={isMobile}
-                    />
-                  </ScrollView>
-                ) : (
-                  <View style={styles.emptyState}>
-                    <Ionicons
-                      name="document-text-outline"
-                      size={isMobile ? 48 : 60}
-                      color="#9CA3AF"
-                    />
-                    <Text style={styles.emptyTitle}>เลือกยาเพื่อดูข้อมูล</Text>
-                    <Text style={styles.emptySubtext}>
-                      กรุณาเลือกยาจากรายการ
-                      {isMobile ? "ด้านบน" : "ด้านซ้าย"}
-                      เพื่อดูความเข้ากันได้กับยาอื่น
-                    </Text>
-                  </View>
-                )}
-              </View>
+                  )}
+                </View>
+              </FadeInView>
             )}
           </View>
         </View>
@@ -401,7 +615,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: 30,
   },
   content: {
     flex: 1,
@@ -412,7 +626,8 @@ const styles = StyleSheet.create({
   pageHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 25,
+    marginBottom: 20,
+    marginTop: 16,
   },
   backButton: {
     width: 40,
@@ -443,72 +658,119 @@ const styles = StyleSheet.create({
   mainContainer: {
     flexDirection: "row",
     flex: 1,
-    gap: 25,
+    alignItems: "flex-start",
   },
   mainContainerMobile: {
     flexDirection: "column",
-    gap: 16,
+    alignItems: "stretch",
   },
 
   // Search Section (Left Panel)
   searchSection: {
-    width: 320,
+    width: 300,
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 25,
+    padding: 18,
     maxHeight: 700,
+    marginRight: 14,
   },
   searchSectionMobile: {
     width: "100%",
-    maxHeight: 500,
-    padding: 18,
+    maxHeight: 480,
+    padding: 14,
     borderRadius: 14,
+    marginRight: 0,
+    marginBottom: 14,
   },
   searchSectionTablet: {
-    width: 280,
-    padding: 20,
+    width: 260,
+    padding: 16,
+    marginRight: 12,
+  },
+  searchHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#0D4C73",
-    marginBottom: 15,
+    flex: 1,
+  },
+  drugCountChip: {
+    backgroundColor: "#E0F2FE",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  drugCountText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#0284C7",
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#F0FDFA",
     borderRadius: 12,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E0F2FE",
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 15,
     color: "#1F2937",
-  },
+    outlineStyle: "none",
+  } as any,
   drugListScroll: {
     flex: 1,
   },
   drugListScrollMobile: {
     maxHeight: 320,
   },
+  noResultBox: {
+    alignItems: "center",
+    paddingVertical: 30,
+  },
+  noResultText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#6B7280",
+    marginTop: 10,
+  },
+  noResultHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 4,
+  },
   drugItem: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     backgroundColor: "#F9FAFB",
     borderRadius: 10,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    marginBottom: 8,
+    borderColor: "#F3F4F6",
+    marginBottom: 6,
   },
   drugItemActive: {
-    backgroundColor: "#EFF6FF",
-    borderColor: "#3B82F6",
+    backgroundColor: "#F0FDFA",
+    borderColor: "#0D9488",
+  },
+  drugItemDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#D1D5DB",
+    marginRight: 12,
+  },
+  drugItemDotActive: {
+    backgroundColor: "#0D9488",
   },
   drugItemContent: {
     flex: 1,
@@ -519,12 +781,12 @@ const styles = StyleSheet.create({
     color: "#1F2937",
   },
   drugItemNameActive: {
-    color: "#3B82F6",
+    color: "#0D9488",
   },
   drugItemThai: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 2,
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 1,
   },
 
   // Details Section (Right Panel)
@@ -532,11 +794,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 25,
+    padding: 20,
+    minHeight: 400,
   },
   detailsSectionMobile: {
-    padding: 18,
+    padding: 14,
     borderRadius: 14,
+    minHeight: 300,
   },
 
   // Mobile Back Button
@@ -544,7 +808,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
-    gap: 6,
   },
   mobileBackButtonText: {
     fontSize: 14,
@@ -554,82 +817,156 @@ const styles = StyleSheet.create({
 
   // Selected Drug Chip
   selectedDrugChipRow: {
-    alignItems: "center",
-    marginBottom: 25,
+    marginBottom: 16,
   },
   selectedDrugChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#E0F2FE",
-    borderRadius: 25,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderWidth: 2,
-    borderColor: "#7DD3FC",
+    backgroundColor: "#F0FDFA",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: "#99F6E4",
   },
   selectedDrugChipMobile: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  drugChipIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#0D9488",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  selectedDrugChipLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#6B7280",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   selectedDrugChipText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#0C4A6E",
-    marginLeft: 10,
-    letterSpacing: 1,
+    color: "#0D4C73",
+    marginTop: 2,
   },
   selectedDrugChipTextMobile: {
-    fontSize: 15,
+    fontSize: 17,
+  },
+  selectedDrugChipThai: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 1,
+  },
+
+  // Summary Stats
+  summaryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 16,
+    marginHorizontal: -3,
+  },
+  summaryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    marginHorizontal: 3,
+    marginBottom: 6,
+    flex: 1,
+    minWidth: 120,
+  },
+  summaryCount: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 6,
+    marginRight: 4,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: "#6B7280",
   },
 
   // Status Section
   statusSection: {
-    marginBottom: 25,
+    marginBottom: 16,
   },
-  statusBadge: {
+  statusHeader: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    paddingLeft: 12,
+    paddingVertical: 6,
+    backgroundColor: "#FAFAFA",
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 12,
   },
-  statusBadgeText: {
+  statusHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  statusHeaderLabel: {
     fontSize: 14,
     fontWeight: "bold",
-    marginLeft: 8,
     letterSpacing: 0.5,
+  },
+  statusHeaderThai: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 1,
+  },
+  countBadge: {
+    borderRadius: 10,
+    minWidth: 28,
+    height: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    marginRight: 8,
+  },
+  countBadgeText: {
+    fontSize: 13,
+    fontWeight: "bold",
   },
 
   // Drug Bar
   drugBar: {
-    backgroundColor: "#1A6B7A",
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    marginBottom: 8,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 6,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   drugBarName: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
     color: "#FFFFFF",
   },
   drugBarThai: {
-    fontSize: 13,
+    fontSize: 12,
     color: "rgba(255,255,255,0.7)",
+    marginTop: 1,
   },
 
   // Empty
   emptySection: {
-    paddingVertical: 12,
-    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   emptySectionText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#9CA3AF",
     fontStyle: "italic",
   },
@@ -637,18 +974,68 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 80,
+    paddingVertical: 40,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#F0FDFA",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#99F6E4",
+    marginBottom: 20,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#6B7280",
-    marginTop: 20,
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#374151",
   },
   emptySubtext: {
     fontSize: 14,
     color: "#9CA3AF",
     marginTop: 8,
     textAlign: "center",
+    lineHeight: 22,
+  },
+  emptyHintRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+    backgroundColor: "#F0FDFA",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  emptyHintDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#0D9488",
+    marginRight: 8,
+  },
+  emptyHintText: {
+    fontSize: 13,
+    color: "#0D9488",
+    fontWeight: "500",
+  },
+
+  // Disclaimer
+  disclaimerBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  disclaimerText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#9CA3AF",
+    lineHeight: 18,
   },
 });

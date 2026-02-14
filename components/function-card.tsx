@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
   StyleSheet,
@@ -28,6 +28,7 @@ export function FunctionCard({
 }: FunctionCardProps) {
   const { width } = useWindowDimensions();
   const isMobile = width < 640;
+  const router = useRouter();
 
   return (
     <View style={isMobile ? styles.cardMobile : styles.card}>
@@ -58,14 +59,13 @@ export function FunctionCard({
       </Text>
 
       {/* Button */}
-      <Link href={href as any} asChild>
-        <TouchableOpacity
-          style={{ ...styles.cardButton, backgroundColor: iconColor }}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.cardButtonText}>{buttonText}</Text>
-        </TouchableOpacity>
-      </Link>
+      <TouchableOpacity
+        style={{ ...styles.cardButton, backgroundColor: iconColor }}
+        activeOpacity={0.8}
+        onPress={() => router.push(href as any)}
+      >
+        <Text style={styles.cardButtonText}>{buttonText}</Text>
+      </TouchableOpacity>
     </View>
   );
 }

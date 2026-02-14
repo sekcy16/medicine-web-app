@@ -83,7 +83,6 @@ const stepStyles = StyleSheet.create({
   stepItem: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 6,
   },
   stepCircle: {
     width: 28,
@@ -108,9 +107,10 @@ const stepStyles = StyleSheet.create({
     color: "#FFFFFF",
   },
   stepLabel: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#9CA3AF",
     fontWeight: "500",
+    marginLeft: 6,
   },
   stepLabelActive: {
     color: "#0D9488",
@@ -158,12 +158,7 @@ function DrugDropdown({
 
   return (
     <View style={styles.dropdownContainer}>
-      <View style={styles.dropdownLabelRow}>
-        <View style={styles.stepBadge}>
-          <Text style={styles.stepBadgeText}>{stepNumber}</Text>
-        </View>
-        <Text style={styles.dropdownLabel}>{label}</Text>
-      </View>
+      <Text style={styles.dropdownLabel}>{label}</Text>
 
       <TouchableOpacity
         style={[
@@ -176,9 +171,6 @@ function DrugDropdown({
       >
         {selectedDrug ? (
           <View style={styles.selectedDrugDisplay}>
-            <View style={styles.drugIconCircle}>
-              <Ionicons name="medkit" size={16} color="#FFFFFF" />
-            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.selectedDrugName}>{selectedDrug.name}</Text>
               <Text style={styles.selectedDrugThai}>
@@ -241,12 +233,6 @@ function DrugDropdown({
           >
             {filtered.length === 0 ? (
               <View style={styles.noResult}>
-                <Ionicons
-                  name="search-outline"
-                  size={28}
-                  color="#D1D5DB"
-                  style={{ marginBottom: 8 }}
-                />
                 <Text style={styles.noResultText}>ไม่พบยาที่ค้นหา</Text>
                 <Text style={styles.noResultHint}>
                   ลองพิมพ์ชื่อยาภาษาอังกฤษหรือไทย
@@ -262,9 +248,6 @@ function DrugDropdown({
                   ]}
                   onPress={() => handleSelect(drug)}
                 >
-                  <View style={styles.dropdownItemIcon}>
-                    <Ionicons name="medical" size={14} color="#0D9488" />
-                  </View>
                   <View>
                     <Text style={styles.dropdownItemName}>{drug.name}</Text>
                     <Text style={styles.dropdownItemThai}>{drug.thaiName}</Text>
@@ -326,7 +309,7 @@ function StatusBadge({
     caution: {
       label: "Caution",
       labelThai: "ควรระวัง",
-      description: "",//"ผสมได้ในบางความเข้มข้น ควรตรวจสอบขนาดยาก่อนใช้ร่วมกัน",
+      description: "ผสมได้ในบางเงื่อนไข ขึ้นอยู่กับความเข้มข้นและสารน้ำที่ใช้",
       icon: "warning" as const,
       bg: "#FFF7ED",
       color: "#EA580C",
@@ -344,15 +327,20 @@ function StatusBadge({
         { backgroundColor: c.bg, borderColor: c.border },
       ]}
     >
-      <View style={[styles.statusIconCircle, { backgroundColor: c.iconBg }]}>
-        <Ionicons name={c.icon} size={28} color={c.color} />
-      </View>
+      <Ionicons
+        name={c.icon}
+        size={32}
+        color={c.color}
+        style={{ marginRight: 16 }}
+      />
       <View style={styles.statusTextContainer}>
         <Text style={[styles.statusLabel, { color: c.color }]}>{c.label}</Text>
         <Text style={[styles.statusLabelThai, { color: c.color }]}>
           {c.labelThai}
         </Text>
-        <Text style={styles.statusDescription}>{c.description}</Text>
+        {c.description ? (
+          <Text style={styles.statusDescription}>{c.description}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -454,6 +442,116 @@ function LoadingDot({ delay }: { delay: number }) {
   return <Animated.View style={[styles.dot, { opacity }]} />;
 }
 
+// ===================== FadeInSection Component =====================
+function FadeInSection({
+  delay = 0,
+  children,
+}: {
+  delay?: number;
+  children: React.ReactNode;
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 450,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [fadeAnim, slideAnim, delay]);
+
+  return (
+    <Animated.View
+      style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+// ===================== FormattedPrecautions Component =====================
+function FormattedPrecautions({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const hasConcentrationInfo = lines.some(
+    (l) => l.includes("= Compatible") || l.includes("= Incompatible"),
+  );
+
+  if (!hasConcentrationInfo) {
+    return <Text style={styles.resultSectionContent}>{text}</Text>;
+  }
+
+  return (
+    <View>
+      {lines.map((line, i) => {
+        const isComp = line.includes("= Compatible");
+        const isIncomp = line.includes("= Incompatible");
+        if (isComp || isIncomp) {
+          const cleanLine = line
+            .replace(" = Compatible", "")
+            .replace(" = Incompatible", "");
+          return (
+            <View
+              key={i}
+              style={[
+                styles.concLine,
+                {
+                  borderLeftColor: isComp ? "#059669" : "#DC2626",
+                  backgroundColor: isComp ? "#F0FDF4" : "#FFF1F2",
+                },
+              ]}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.concLineText}>{cleanLine}</Text>
+              </View>
+              <View
+                style={[
+                  styles.concTag,
+                  { backgroundColor: isComp ? "#DCFCE7" : "#FFE4E6" },
+                ]}
+              >
+                <Ionicons
+                  name={isComp ? "checkmark-circle" : "close-circle"}
+                  size={13}
+                  color={isComp ? "#059669" : "#DC2626"}
+                  style={{ marginRight: 4 }}
+                />
+                <Text
+                  style={[
+                    styles.concTagText,
+                    { color: isComp ? "#059669" : "#DC2626" },
+                  ]}
+                >
+                  {isComp ? "ผสมได้" : "ห้ามผสม"}
+                </Text>
+              </View>
+            </View>
+          );
+        }
+        return (
+          <Text
+            key={i}
+            style={[styles.resultSectionContent, i > 0 && { marginTop: 6 }]}
+          >
+            {line}
+          </Text>
+        );
+      })}
+    </View>
+  );
+}
+
 // ===================== ResultView Component =====================
 function ResultView({
   drug1,
@@ -489,6 +587,44 @@ function ResultView({
     ]).start();
   }, [fadeAnim, slideAnim]);
 
+  const sc = {
+    compatible: {
+      icon: "checkmark-circle" as const,
+      title: "ผสมได้อย่างปลอดภัย",
+      text: "ยาทั้งสองชนิดสามารถให้ร่วมกันได้ โปรดปฏิบัติตามข้อควรระวังด้านล่าง",
+      bg: "#ECFDF5",
+      color: "#059669",
+      border: "#A7F3D0",
+    },
+    incompatible: {
+      icon: "close-circle" as const,
+      title: "ห้ามผสมร่วมกัน",
+      text: "ยาทั้งสองชนิดไม่สามารถให้ร่วมกันได้ อาจเกิดปฏิกิริยาที่เป็นอันตราย",
+      bg: "#FEF2F2",
+      color: "#DC2626",
+      border: "#FECACA",
+    },
+    caution: {
+      icon: "warning" as const,
+      title: "ผสมได้ในบางเงื่อนไข",
+      text: "การผสมยาคู่นี้ขึ้นอยู่กับความเข้มข้นและสารน้ำที่ใช้ กรุณาตรวจสอบรายละเอียด",
+      bg: "#FFF7ED",
+      color: "#EA580C",
+      border: "#FED7AA",
+    },
+    limited_data: {
+      icon: "help-circle" as const,
+      title: "ไม่พบข้อมูลในระบบ",
+      text: "ยังไม่มีข้อมูลการผสมยาคู่นี้ในฐานข้อมูล กรุณาปรึกษาเภสัชกรก่อนใช้ร่วมกัน",
+      bg: "#FFFBEB",
+      color: "#D97706",
+      border: "#FDE68A",
+    },
+  };
+  const summary = sc[result.status];
+  const hasNursingCare = result.nursingCare && result.nursingCare !== "-";
+  const hasPrecautions = result.precautions && result.precautions !== "-";
+
   return (
     <Animated.View
       style={{
@@ -497,90 +633,186 @@ function ResultView({
       }}
     >
       {/* Result Title */}
-      <View style={styles.resultTitleRow}>
-        <Ionicons name="document-text" size={20} color="#0D4C73" />
-        <Text style={styles.resultTitle}>ผลการตรวจสอบ</Text>
-      </View>
+      <FadeInSection delay={0}>
+        <View style={styles.resultTitleRow}>
+          <Ionicons
+            name="flask"
+            size={22}
+            color="#0D4C73"
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.resultTitle}>ผลการตรวจสอบ</Text>
+        </View>
+      </FadeInSection>
 
-      {/* Drug Pair Header */}
-      <View
-        style={[styles.resultDrugPair, isMobile && styles.resultDrugPairMobile]}
-      >
-        <View style={styles.resultDrugChip}>
-          <View style={[styles.resultDrugIcon, { backgroundColor: "#E0F2FE" }]}>
-            <Ionicons name="medkit" size={14} color="#0D9488" />
-          </View>
-          <View>
+      {/* Drug Pair */}
+      <FadeInSection delay={100}>
+        <View
+          style={[
+            styles.resultDrugPair,
+            isMobile && styles.resultDrugPairMobile,
+          ]}
+        >
+          <View style={styles.resultDrugChip}>
             <Text style={styles.resultDrugChipText}>{drug1.name}</Text>
             <Text style={styles.resultDrugChipThai}>{drug1.thaiName}</Text>
           </View>
-        </View>
-        <View style={styles.mixIconCircle}>
-          <Ionicons name="add" size={16} color="#FFFFFF" />
-        </View>
-        <View style={styles.resultDrugChip}>
-          <View style={[styles.resultDrugIcon, { backgroundColor: "#DBEAFE" }]}>
-            <Ionicons name="medkit" size={14} color="#3B82F6" />
+          <View style={styles.mixSymbolContainer}>
+            <Ionicons name="add-circle" size={28} color="#0D9488" />
           </View>
-          <View>
+          <View style={styles.resultDrugChip}>
             <Text style={styles.resultDrugChipText}>{drug2.name}</Text>
             <Text style={styles.resultDrugChipThai}>{drug2.thaiName}</Text>
           </View>
         </View>
-      </View>
+      </FadeInSection>
 
-      {/* Status */}
-      <StatusBadge status={result.status} isMobile={isMobile} />
+      {/* Summary Alert */}
+      <FadeInSection delay={250}>
+        <View
+          style={[
+            styles.summaryBox,
+            { backgroundColor: summary.bg, borderColor: summary.border },
+          ]}
+        >
+          <Ionicons
+            name={summary.icon}
+            size={28}
+            color={summary.color}
+            style={{ marginRight: 12, marginTop: 2 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.summaryTitle, { color: summary.color }]}>
+              {summary.title}
+            </Text>
+            <Text style={styles.summaryText}>{summary.text}</Text>
+          </View>
+        </View>
+      </FadeInSection>
+
+      {/* Status Badge */}
+      <FadeInSection delay={400}>
+        <StatusBadge status={result.status} isMobile={isMobile} />
+      </FadeInSection>
 
       {/* Nursing Care */}
-      <View style={styles.resultSection}>
-        <View style={styles.resultSectionHeader}>
-          <View
-            style={[styles.sectionIconCircle, { backgroundColor: "#FCE7F3" }]}
-          >
-            <Ionicons name="heart" size={18} color="#EC4899" />
+      {hasNursingCare && (
+        <FadeInSection delay={550}>
+          <View style={[styles.resultSection, { borderLeftColor: "#0D9488" }]}>
+            <View style={styles.sectionTitleRow}>
+              <Ionicons
+                name="water"
+                size={18}
+                color="#0D9488"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.resultSectionTitle, { color: "#0D9488" }]}>
+                การบริหารยา
+              </Text>
+            </View>
+            <Text style={styles.resultSectionContent}>
+              {result.nursingCare}
+            </Text>
           </View>
-          <Text style={styles.resultSectionTitle}>สารน้ำที่ใช้ได้</Text>
-        </View>
-        <Text style={styles.resultSectionContent}>{result.nursingCare}</Text>
-      </View>
+        </FadeInSection>
+      )}
 
       {/* Precautions */}
-      <View style={styles.resultSection}>
-        <View style={styles.resultSectionHeader}>
-          <View
-            style={[styles.sectionIconCircle, { backgroundColor: "#FEF3C7" }]}
-          >
-            <Ionicons name="warning" size={18} color="#D97706" />
+      {hasPrecautions && (
+        <FadeInSection delay={700}>
+          <View style={[styles.resultSection, { borderLeftColor: "#D97706" }]}>
+            <View style={styles.sectionTitleRow}>
+              <Ionicons
+                name="warning"
+                size={18}
+                color="#D97706"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.resultSectionTitle, { color: "#D97706" }]}>
+                ข้อควรระวัง
+              </Text>
+            </View>
+            <FormattedPrecautions text={result.precautions} />
           </View>
-          <Text style={styles.resultSectionTitle}>ข้อควรระวัง</Text>
+        </FadeInSection>
+      )}
+
+      {/* Reference */}
+      {result.reference && result.reference !== "-" && (
+        <FadeInSection delay={850}>
+          <View style={[styles.resultSection, { borderLeftColor: "#6366F1" }]}>
+            <View style={styles.sectionTitleRow}>
+              <Ionicons
+                name="document-text"
+                size={18}
+                color="#6366F1"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.resultSectionTitle, { color: "#6366F1" }]}>
+                แหล่งอ้างอิง
+              </Text>
+            </View>
+            <Text
+              style={[styles.resultSectionContent, { fontStyle: "italic" }]}
+            >
+              {result.reference}
+            </Text>
+          </View>
+        </FadeInSection>
+      )}
+
+      {/* Disclaimer */}
+      <FadeInSection delay={950}>
+        <View style={styles.disclaimerBox}>
+          <Ionicons
+            name="information-circle"
+            size={16}
+            color="#9CA3AF"
+            style={{ marginRight: 6, marginTop: 1 }}
+          />
+          <Text style={styles.disclaimerText}>
+            ข้อมูลนี้ใช้เพื่อการศึกษาเท่านั้น
+            ไม่สามารถใช้ทดแทนคำแนะนำจากเภสัชกรหรือแพทย์ได้
+          </Text>
         </View>
-        <Text style={styles.resultSectionContent}>{result.precautions}</Text>
-      </View>
+      </FadeInSection>
+
       {/* Action Buttons */}
-      <View
-        style={[styles.resultActions, isMobile && styles.resultActionsMobile]}
-      >
-        <TouchableOpacity
-          style={[
-            styles.resetButton,
-            isMobile && { marginRight: 0, marginBottom: 10 },
-          ]}
-          onPress={onReset}
-          activeOpacity={0.7}
+      <FadeInSection delay={1050}>
+        <View
+          style={[styles.resultActions, isMobile && styles.resultActionsMobile]}
         >
-          <Ionicons name="refresh" size={18} color="#0D9488" />
-          <Text style={styles.resetButtonText}>ทดลองผสมยาใหม่</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.homeButton, isMobile && { marginLeft: 0 }]}
-          onPress={onGoHome}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="home" size={18} color="#FFFFFF" />
-          <Text style={styles.homeButtonText}>กลับหน้าหลัก</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={[
+              styles.resetButton,
+              isMobile && { marginRight: 0, marginBottom: 10 },
+            ]}
+            onPress={onReset}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="refresh"
+              size={18}
+              color="#0D9488"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.resetButtonText}>ตรวจสอบคู่ยาอื่น</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.homeButton, isMobile && { marginLeft: 0 }]}
+            onPress={onGoHome}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="home"
+              size={18}
+              color="#FFFFFF"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.homeButtonText}>กลับหน้าหลัก</Text>
+          </TouchableOpacity>
+        </View>
+      </FadeInSection>
     </Animated.View>
   );
 }
@@ -649,181 +881,182 @@ export default function DrugMixingScreen() {
 
         <View style={[styles.content, { paddingHorizontal: contentPadding }]}>
           {/* Page Title + Back Button */}
-          <View style={styles.pageHeader}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.push("/")}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-            <View>
-              <Text
-                style={[styles.pageTitle, isMobile && styles.pageTitleMobile]}
+          <FadeInSection delay={100}>
+            <View style={styles.pageHeader}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.push("/")}
+                activeOpacity={0.7}
               >
-                ทดลองการผสมยา
-              </Text>
-              <Text style={styles.pageSubtitle}>
-                ตรวจสอบความเข้ากันได้ของยา 2 ชนิด
-              </Text>
+                <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <View>
+                <Text
+                  style={[styles.pageTitle, isMobile && styles.pageTitleMobile]}
+                >
+                  ทดลองการผสมยา
+                </Text>
+                <Text style={styles.pageSubtitle}>
+                  ตรวจสอบความเข้ากันได้ของยา 2 ชนิด
+                </Text>
+              </View>
             </View>
-          </View>
+          </FadeInSection>
 
           {/* Main Card */}
-          <View style={[styles.mainCard, isMobile && styles.mainCardMobile]}>
-            {!result && !isProcessing && (
-              <>
-                {/* Step Indicator */}
-                <View style={styles.stepIndicatorRow}>
-                  <StepIndicator
-                    step={1}
-                    currentStep={currentStep}
-                    label="เลือกยา 1"
-                    isMobile={isMobile}
-                  />
-                  <View style={styles.stepLine} />
-                  <StepIndicator
-                    step={2}
-                    currentStep={currentStep}
-                    label="เลือกยา 2"
-                    isMobile={isMobile}
-                  />
-                  <View style={styles.stepLine} />
-                  <StepIndicator
-                    step={3}
-                    currentStep={currentStep}
-                    label="ประมวลผล"
-                    isMobile={isMobile}
-                  />
-                </View>
-
-                {/* Drug Selection */}
-                <View
-                  style={[
-                    styles.drugSelectionRow,
-                    isMobile && styles.drugSelectionRowMobile,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.drugSelectionCol,
-                      isMobile && styles.drugSelectionColMobile,
-                      { zIndex: openDropdown === "drug1" ? 100 : 20 },
-                    ]}
-                  >
-                    <DrugDropdown
-                      label="เลือกยาตัวที่ 1"
-                      stepNumber={1}
-                      selectedDrug={drug1}
-                      onSelect={setDrug1}
-                      onClear={() => setDrug1(null)}
-                      excludeDrugId={drug2?.id}
+          <FadeInSection delay={250}>
+            <View style={[styles.mainCard, isMobile && styles.mainCardMobile]}>
+              {!result && !isProcessing && (
+                <>
+                  {/* Step Indicator */}
+                  <View style={styles.stepIndicatorRow}>
+                    <StepIndicator
+                      step={1}
+                      currentStep={currentStep}
+                      label="เลือกยา 1"
                       isMobile={isMobile}
-                      isOpen={openDropdown === "drug1"}
-                      onToggle={() =>
-                        setOpenDropdown(
-                          openDropdown === "drug1" ? "none" : "drug1",
-                        )
-                      }
+                    />
+                    <View style={styles.stepLine} />
+                    <StepIndicator
+                      step={2}
+                      currentStep={currentStep}
+                      label="เลือกยา 2"
+                      isMobile={isMobile}
+                    />
+                    <View style={styles.stepLine} />
+                    <StepIndicator
+                      step={3}
+                      currentStep={currentStep}
+                      label="ประมวลผล"
+                      isMobile={isMobile}
                     />
                   </View>
 
-                  {/* Swap Button */}
-                  {drug1 && drug2 && (
-                    <TouchableOpacity
+                  {/* Drug Selection */}
+                  <View
+                    style={[
+                      styles.drugSelectionRow,
+                      isMobile && styles.drugSelectionRowMobile,
+                    ]}
+                  >
+                    <View
                       style={[
-                        styles.swapButton,
-                        isMobile && styles.swapButtonMobile,
+                        styles.drugSelectionCol,
+                        isMobile && styles.drugSelectionColMobile,
+                        { zIndex: openDropdown === "drug1" ? 100 : 20 },
                       ]}
-                      onPress={handleSwapDrugs}
-                      activeOpacity={0.7}
                     >
-                      <Ionicons
-                        name={isMobile ? "swap-vertical" : "swap-horizontal"}
-                        size={20}
-                        color="#0D9488"
+                      <DrugDropdown
+                        label="เลือกยาตัวที่ 1"
+                        stepNumber={1}
+                        selectedDrug={drug1}
+                        onSelect={setDrug1}
+                        onClear={() => setDrug1(null)}
+                        excludeDrugId={drug2?.id}
+                        isMobile={isMobile}
+                        isOpen={openDropdown === "drug1"}
+                        onToggle={() =>
+                          setOpenDropdown(
+                            openDropdown === "drug1" ? "none" : "drug1",
+                          )
+                        }
                       />
-                    </TouchableOpacity>
-                  )}
+                    </View>
 
-                  <View
+                    {/* Swap Button */}
+                    {drug1 && drug2 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.swapButton,
+                          isMobile && styles.swapButtonMobile,
+                        ]}
+                        onPress={handleSwapDrugs}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons
+                          name={isMobile ? "swap-vertical" : "swap-horizontal"}
+                          size={20}
+                          color="#0D9488"
+                        />
+                      </TouchableOpacity>
+                    )}
+
+                    <View
+                      style={[
+                        styles.drugSelectionCol,
+                        isMobile && styles.drugSelectionColMobile,
+                        { zIndex: openDropdown === "drug2" ? 100 : 10 },
+                      ]}
+                    >
+                      <DrugDropdown
+                        label="เลือกยาตัวที่ 2"
+                        stepNumber={2}
+                        selectedDrug={drug2}
+                        onSelect={setDrug2}
+                        onClear={() => setDrug2(null)}
+                        excludeDrugId={drug1?.id}
+                        isMobile={isMobile}
+                        isOpen={openDropdown === "drug2"}
+                        onToggle={() =>
+                          setOpenDropdown(
+                            openDropdown === "drug2" ? "none" : "drug2",
+                          )
+                        }
+                      />
+                    </View>
+                  </View>
+
+                  {/* Process Button */}
+                  <TouchableOpacity
                     style={[
-                      styles.drugSelectionCol,
-                      isMobile && styles.drugSelectionColMobile,
-                      { zIndex: openDropdown === "drug2" ? 100 : 10 },
+                      styles.processButton,
+                      !canProcess && styles.processButtonDisabled,
                     ]}
+                    onPress={handleProcess}
+                    disabled={!canProcess}
+                    activeOpacity={0.8}
                   >
-                    <DrugDropdown
-                      label="เลือกยาตัวที่ 2"
-                      stepNumber={2}
-                      selectedDrug={drug2}
-                      onSelect={setDrug2}
-                      onClear={() => setDrug2(null)}
-                      excludeDrugId={drug1?.id}
-                      isMobile={isMobile}
-                      isOpen={openDropdown === "drug2"}
-                      onToggle={() =>
-                        setOpenDropdown(
-                          openDropdown === "drug2" ? "none" : "drug2",
-                        )
-                      }
-                    />
-                  </View>
-                </View>
+                    <View style={styles.processButtonInner}>
+                      <Text style={styles.processButtonText}>
+                        ตรวจสอบความเข้ากันได้
+                      </Text>
+                    </View>
+                    {!canProcess && (
+                      <Text style={styles.processButtonHint}>
+                        กรุณาเลือกยาทั้ง 2 ชนิดก่อน
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
 
-                {/* Process Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.processButton,
-                    !canProcess && styles.processButtonDisabled,
-                  ]}
-                  onPress={handleProcess}
-                  disabled={!canProcess}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.processButtonInner}>
-                    <Ionicons name="flask" size={20} color="#FFFFFF" />
-                    <Text style={styles.processButtonText}>
-                      ตรวจสอบความเข้ากันได้
-                    </Text>
-                  </View>
-                  {!canProcess && (
-                    <Text style={styles.processButtonHint}>
-                      กรุณาเลือกยาทั้ง 2 ชนิดก่อน
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
+              {/* Loading Animation */}
+              {isProcessing && <LoadingAnimation />}
 
-            {/* Loading Animation */}
-            {isProcessing && <LoadingAnimation />}
-
-            {/* Result */}
-            {result && drug1 && drug2 && (
-              <ResultView
-                drug1={drug1}
-                drug2={drug2}
-                result={result}
-                onReset={handleReset}
-                onGoHome={handleGoHome}
-                isMobile={isMobile}
-              />
-            )}
-          </View>
+              {/* Result */}
+              {result && drug1 && drug2 && (
+                <ResultView
+                  drug1={drug1}
+                  drug2={drug2}
+                  result={result}
+                  onReset={handleReset}
+                  onGoHome={handleGoHome}
+                  isMobile={isMobile}
+                />
+              )}
+            </View>
+          </FadeInSection>
 
           {/* Footer note */}
           {!result && !isProcessing && (
-            <View style={styles.footerNote}>
-              <Ionicons
-                name="information-circle"
-                size={16}
-                color="rgba(255,255,255,0.6)"
-              />
-              <Text style={styles.footerNoteText}>
-                ข้อมูลนี้ใช้เพื่อการศึกษาเท่านั้น ควรปรึกษาเภสัชกรก่อนใช้ยาจริง
-              </Text>
-            </View>
+            <FadeInSection delay={400}>
+              <View style={styles.footerNote}>
+                <Text style={styles.footerNoteText}>
+                  ข้อมูลนี้ใช้เพื่อการศึกษาเท่านั้น
+                  ควรปรึกษาเภสัชกรก่อนใช้ยาจริง
+                </Text>
+              </View>
+            </FadeInSection>
           )}
         </View>
       </ScrollView>
@@ -850,6 +1083,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
+    marginTop: 20,
   },
   backButton: {
     width: 40,
@@ -863,7 +1097,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.1)",
   },
   pageTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#FFFFFF",
   },
@@ -871,7 +1105,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   pageSubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: "rgba(255,255,255,0.7)",
     marginTop: 2,
   },
@@ -896,7 +1130,7 @@ const styles = StyleSheet.create({
   mainCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    padding: 30,
+    padding: 40,
     minHeight: 350,
   },
   mainCardMobile: {
@@ -911,19 +1145,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     zIndex: 20,
     position: "relative",
-    gap: 15,
+    marginHorizontal: -8,
   },
   drugSelectionRowMobile: {
     flexDirection: "column",
-    gap: 12,
+    marginHorizontal: 0,
   },
   drugSelectionCol: {
     flex: 1,
     zIndex: 20,
+    marginHorizontal: 8,
   },
   drugSelectionColMobile: {
     flex: undefined,
     width: "100%",
+    marginHorizontal: 0,
+    marginBottom: 12,
   },
 
   // Swap Button
@@ -949,29 +1186,11 @@ const styles = StyleSheet.create({
     position: "relative",
     zIndex: 30,
   },
-  dropdownLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    gap: 8,
-  },
-  stepBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#0D9488",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  stepBadgeText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
   dropdownLabel: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: "#374151",
+    marginBottom: 8,
   },
   dropdownButton: {
     flexDirection: "row",
@@ -981,9 +1200,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: "#E5E7EB",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    minHeight: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 60,
   },
   dropdownButtonSelected: {
     borderColor: "#0D9488",
@@ -1004,25 +1223,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    gap: 10,
-  },
-  drugIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#0D9488",
-    justifyContent: "center",
-    alignItems: "center",
   },
   selectedDrugName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     color: "#1F2937",
   },
   selectedDrugThai: {
-    fontSize: 12,
+    fontSize: 13,
     color: "#6B7280",
-    marginTop: 1,
+    marginTop: 2,
   },
   dropdownMenu: {
     position: "absolute",
@@ -1048,13 +1258,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
-    gap: 8,
   },
   dropdownSearchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     color: "#1F2937",
     padding: 0,
+    marginLeft: 8,
     outlineStyle: "none",
   } as any,
   dropdownList: {
@@ -1063,32 +1273,23 @@ const styles = StyleSheet.create({
   dropdownItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#F3F4F6",
-    gap: 10,
   },
   dropdownItemPressed: {
     backgroundColor: "#F0FDFA",
   },
-  dropdownItemIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#F0FDFA",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   dropdownItemName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
     color: "#1F2937",
   },
   dropdownItemThai: {
-    fontSize: 12,
+    fontSize: 13,
     color: "#6B7280",
-    marginTop: 1,
+    marginTop: 2,
   },
   dropdownFooter: {
     paddingVertical: 8,
@@ -1107,7 +1308,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   noResultText: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#6B7280",
     fontWeight: "500",
   },
@@ -1135,10 +1336,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
   },
   processButtonText: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
   },
@@ -1185,13 +1385,13 @@ const styles = StyleSheet.create({
   loadingDots: {
     flexDirection: "row",
     marginTop: 16,
-    gap: 6,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: "#0D9488",
+    marginHorizontal: 3,
   },
 
   // Status Badge
@@ -1200,46 +1400,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 14,
     borderWidth: 1.5,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    marginBottom: 20,
-    gap: 14,
-  },
-  statusIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    marginBottom: 24,
   },
   statusTextContainer: {
     flex: 1,
   },
   statusLabel: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: "bold",
   },
   statusLabelThai: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     marginTop: 2,
   },
   statusDescription: {
-    fontSize: 13,
+    fontSize: 14,
     color: "#6B7280",
     marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 20,
   },
 
   // Result
-  resultTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    gap: 8,
-  },
   resultTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#0D4C73",
   },
@@ -1248,89 +1434,139 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
-    gap: 10,
   },
   resultDrugPairMobile: {
     flexDirection: "column",
-    gap: 8,
   },
   resultDrugChip: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F8FAFC",
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    gap: 10,
     flex: 1,
-    maxWidth: 250,
-  },
-  resultDrugIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
+    maxWidth: 280,
   },
   resultDrugChipText: {
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: "600",
     color: "#0D4C73",
   },
   resultDrugChipThai: {
-    fontSize: 11,
+    fontSize: 13,
     color: "#6B7280",
-    marginTop: 1,
+    marginTop: 2,
   },
-  mixIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#0D9488",
-    justifyContent: "center",
-    alignItems: "center",
+  mixSymbol: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#0D9488",
+    marginHorizontal: 8,
   },
 
   resultSection: {
     backgroundColor: "#F8FAFC",
     borderRadius: 14,
-    padding: 18,
+    padding: 20,
     marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-  },
-  resultSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    gap: 10,
-  },
-  sectionIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    justifyContent: "center",
-    alignItems: "center",
+    borderLeftWidth: 4,
+    borderLeftColor: "#0D9488",
   },
   resultSectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#1F2937",
   },
   resultSectionContent: {
+    fontSize: 15,
+    color: "#4B5563",
+    lineHeight: 24,
+  },
+
+  // Enhanced Result
+  resultTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  mixSymbolContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 6,
+  },
+  summaryBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 16,
+    marginBottom: 20,
+  },
+  summaryTitle: {
+    fontSize: 17,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  summaryText: {
     fontSize: 14,
     color: "#4B5563",
-    lineHeight: 22,
-    paddingLeft: 44,
+    lineHeight: 20,
+  },
+  disclaimerBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 20,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.04)",
+  },
+  disclaimerText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#9CA3AF",
+    lineHeight: 18,
+  },
+  concLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderLeftWidth: 3,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+  },
+  concLineText: {
+    fontSize: 13,
+    color: "#374151",
+    lineHeight: 19,
+  },
+  concTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  concTagText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
 
   // Action Buttons
   resultActions: {
     flexDirection: "row",
     marginTop: 24,
-    gap: 10,
   },
   resultActionsMobile: {
     flexDirection: "column",
@@ -1345,10 +1581,10 @@ const styles = StyleSheet.create({
     borderColor: "#0D9488",
     borderRadius: 12,
     paddingVertical: 14,
-    gap: 8,
+    marginRight: 5,
   },
   resetButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: "#0D9488",
   },
@@ -1360,10 +1596,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#0D4C73",
     borderRadius: 12,
     paddingVertical: 14,
-    gap: 8,
+    marginLeft: 5,
   },
   homeButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
   },
@@ -1374,7 +1610,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
-    gap: 6,
     paddingHorizontal: 10,
   },
   footerNoteText: {
