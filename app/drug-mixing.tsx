@@ -446,9 +446,11 @@ function LoadingDot({ delay }: { delay: number }) {
 function FadeInSection({
   delay = 0,
   children,
+  style,
 }: {
   delay?: number;
   children: React.ReactNode;
+  style?: any;
 }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
@@ -474,7 +476,10 @@ function FadeInSection({
 
   return (
     <Animated.View
-      style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+      style={[
+        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+        style,
+      ]}
     >
       {children}
     </Animated.View>
@@ -587,41 +592,6 @@ function ResultView({
     ]).start();
   }, [fadeAnim, slideAnim]);
 
-  const sc = {
-    compatible: {
-      icon: "checkmark-circle" as const,
-      title: "ผสมได้อย่างปลอดภัย",
-      text: "ยาทั้งสองชนิดสามารถให้ร่วมกันได้ โปรดปฏิบัติตามข้อควรระวังด้านล่าง",
-      bg: "#ECFDF5",
-      color: "#059669",
-      border: "#A7F3D0",
-    },
-    incompatible: {
-      icon: "close-circle" as const,
-      title: "ห้ามผสมร่วมกัน",
-      text: "ยาทั้งสองชนิดไม่สามารถให้ร่วมกันได้ อาจเกิดปฏิกิริยาที่เป็นอันตราย",
-      bg: "#FEF2F2",
-      color: "#DC2626",
-      border: "#FECACA",
-    },
-    caution: {
-      icon: "warning" as const,
-      title: "ผสมได้ในบางเงื่อนไข",
-      text: "การผสมยาคู่นี้ขึ้นอยู่กับความเข้มข้นและสารน้ำที่ใช้ กรุณาตรวจสอบรายละเอียด",
-      bg: "#FFF7ED",
-      color: "#EA580C",
-      border: "#FED7AA",
-    },
-    limited_data: {
-      icon: "help-circle" as const,
-      title: "ไม่พบข้อมูลในระบบ",
-      text: "ยังไม่มีข้อมูลการผสมยาคู่นี้ในฐานข้อมูล กรุณาปรึกษาเภสัชกรก่อนใช้ร่วมกัน",
-      bg: "#FFFBEB",
-      color: "#D97706",
-      border: "#FDE68A",
-    },
-  };
-  const summary = sc[result.status];
   const hasNursingCare = result.nursingCare && result.nursingCare !== "-";
   const hasPrecautions = result.precautions && result.precautions !== "-";
 
@@ -667,37 +637,14 @@ function ResultView({
         </View>
       </FadeInSection>
 
-      {/* Summary Alert */}
-      <FadeInSection delay={250}>
-        <View
-          style={[
-            styles.summaryBox,
-            { backgroundColor: summary.bg, borderColor: summary.border },
-          ]}
-        >
-          <Ionicons
-            name={summary.icon}
-            size={28}
-            color={summary.color}
-            style={{ marginRight: 12, marginTop: 2 }}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.summaryTitle, { color: summary.color }]}>
-              {summary.title}
-            </Text>
-            <Text style={styles.summaryText}>{summary.text}</Text>
-          </View>
-        </View>
-      </FadeInSection>
-
       {/* Status Badge */}
-      <FadeInSection delay={400}>
+      <FadeInSection delay={250}>
         <StatusBadge status={result.status} isMobile={isMobile} />
       </FadeInSection>
 
       {/* Nursing Care */}
       {hasNursingCare && (
-        <FadeInSection delay={550}>
+        <FadeInSection delay={400}>
           <View style={[styles.resultSection, { borderLeftColor: "#0D9488" }]}>
             <View style={styles.sectionTitleRow}>
               <Ionicons
@@ -719,7 +666,7 @@ function ResultView({
 
       {/* Precautions */}
       {hasPrecautions && (
-        <FadeInSection delay={700}>
+        <FadeInSection delay={550}>
           <View style={[styles.resultSection, { borderLeftColor: "#D97706" }]}>
             <View style={styles.sectionTitleRow}>
               <Ionicons
@@ -739,7 +686,7 @@ function ResultView({
 
       {/* Reference */}
       {result.reference && result.reference !== "-" && (
-        <FadeInSection delay={850}>
+        <FadeInSection delay={700}>
           <View style={[styles.resultSection, { borderLeftColor: "#6366F1" }]}>
             <View style={styles.sectionTitleRow}>
               <Ionicons
@@ -762,7 +709,7 @@ function ResultView({
       )}
 
       {/* Disclaimer */}
-      <FadeInSection delay={950}>
+      <FadeInSection delay={850}>
         <View style={styles.disclaimerBox}>
           <Ionicons
             name="information-circle"
@@ -778,7 +725,7 @@ function ResultView({
       </FadeInSection>
 
       {/* Action Buttons */}
-      <FadeInSection delay={1050}>
+      <FadeInSection delay={950}>
         <View
           style={[styles.resultActions, isMobile && styles.resultActionsMobile]}
         >
@@ -904,7 +851,10 @@ export default function DrugMixingScreen() {
           </FadeInSection>
 
           {/* Main Card */}
-          <FadeInSection delay={250}>
+          <FadeInSection
+            delay={250}
+            style={{ zIndex: 10, position: "relative" }}
+          >
             <View style={[styles.mainCard, isMobile && styles.mainCardMobile]}>
               {!result && !isProcessing && (
                 <>
@@ -1049,7 +999,10 @@ export default function DrugMixingScreen() {
 
           {/* Footer note */}
           {!result && !isProcessing && (
-            <FadeInSection delay={400}>
+            <FadeInSection
+              delay={400}
+              style={{ zIndex: 1, position: "relative" }}
+            >
               <View style={styles.footerNote}>
                 <Text style={styles.footerNoteText}>
                   ข้อมูลนี้ใช้เพื่อการศึกษาเท่านั้น
@@ -1501,24 +1454,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 6,
-  },
-  summaryBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    borderRadius: 14,
-    borderWidth: 1.5,
-    padding: 16,
-    marginBottom: 20,
-  },
-  summaryTitle: {
-    fontSize: 17,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  summaryText: {
-    fontSize: 14,
-    color: "#4B5563",
-    lineHeight: 20,
   },
   disclaimerBox: {
     flexDirection: "row",

@@ -1,24 +1,24 @@
 import { GradientBackground } from "@/components/gradient-background";
 import { Header } from "@/components/header";
 import {
-  CompatibilityStatus,
-  Drug,
-  drugList,
-  mixingResults,
+    CompatibilityStatus,
+    Drug,
+    drugList,
+    mixingResults,
 } from "@/data/drug-mixing-data";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
-  Easing,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Animated,
+    Easing,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 // ===================== Responsive Hook =====================
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: 16,
-    marginHorizontal: -3,
+    marginHorizontal: -4,
   },
   summaryItem: {
     flexDirection: "row",
@@ -877,10 +877,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderWidth: 1,
-    marginHorizontal: 3,
-    marginBottom: 6,
-    flex: 1,
-    minWidth: 120,
+    marginHorizontal: 4,
+    marginBottom: 8,
+    width: "46%",
+    flexGrow: 1,
   },
   summaryCount: {
     fontSize: 16,
