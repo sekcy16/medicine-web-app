@@ -517,6 +517,15 @@ export const mixingResults: MixingResult[] = [
     precautions: "Dopamine อาจทำให้หัวใจเต้นเร็ว ความดันไม่คงที่",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
+  {
+    drug1Id: "6",
+    drug2Id: "10",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: NSS",
+    precautions:
+      "เฝ้าระวังความดันโลหิตและอัตราการเต้นของหัวใจจาก Dopamine รวมถึงอาการแพ้ยาและการทำงานของไตจาก Meropenem",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
 
   // --- Dormicum (7) ---
   {
