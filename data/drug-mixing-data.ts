@@ -19,27 +19,35 @@ export interface MixingResult {
   reference: string;
 }
 
-// รายการยาอ้างอิงจากไฟล์ CSV จัดเรียง A-Z
+// รายการยาอ้างอิงจากไฟล์ CSV ล่าสุด จัดเรียง A-Z
 export const drugList: Drug[] = [
   { id: "1", name: "Adrenaline", thaiName: "อะดรีนาลีน" },
   { id: "2", name: "Azithromycin", thaiName: "อะซิโธรมัยซิน" },
   { id: "3", name: "Ceftazidime", thaiName: "เซฟตาซิดีม" },
   { id: "4", name: "Ceftriaxone", thaiName: "เซฟไตรอะโซน" },
+  {
+    id: "12",
+    name: "Cisatracurium besylate",
+    thaiName: "ซิสอะทราคูเรียม เบซิลเลต",
+  }, // อัปเดตจาก Nimbex
   { id: "5", name: "Dobutamine", thaiName: "โดบูทามีน" },
   { id: "6", name: "Dopamine", thaiName: "โดพามีน" },
-  { id: "7", name: "Dormicum", thaiName: "ดอร์มิคุม" },
   { id: "8", name: "Fentanyl", thaiName: "เฟนทานิล" },
   { id: "9", name: "Hydrocortisone", thaiName: "ไฮโดรคอร์ติโซน" },
   { id: "10", name: "Meropenem", thaiName: "เมโรพีเนม" },
   { id: "11", name: "Methylene blue", thaiName: "เมทิลีนบลู" },
-  { id: "12", name: "Nimbex", thaiName: "นิมเบกซ์" },
+  { id: "7", name: "Midazolam", thaiName: "มิดาโซแลม" }, // อัปเดตจาก Dormicum
   { id: "13", name: "Norepinephrine", thaiName: "นอร์เอพิเนฟรีน" },
+  {
+    id: "15",
+    name: "Piperacillin+Tazobactam",
+    thaiName: "ไพเพอราซิลลิน+ทาโซแบคแทม",
+  }, // อัปเดตจาก Tazocin
   { id: "14", name: "Propofol", thaiName: "โปรโพฟอล" },
-  { id: "15", name: "Tazocin", thaiName: "ทาโซซิน" },
   { id: "16", name: "Terlipressin", thaiName: "เทอร์ลิเพรสซิน" },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
-// ข้อมูลผลการผสมยาพร้อมอ้างอิง อัปเดตล่าสุดตามไฟล์ CSV
+// ข้อมูลผลการผสมยา อัปเดตล่าสุดตามไฟล์ CSV (ตัดคู่ที่ No Data ออก)
 export const mixingResults: MixingResult[] = [
   // --- Azithromycin (2) ---
   {
@@ -92,8 +100,8 @@ export const mixingResults: MixingResult[] = [
   {
     drug1Id: "2",
     drug2Id: "7",
-    status: "incompatible",
-    nursingCare: "-",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
       "ยา Azithromycin เป็นยาในกลุ่ม macrolide ซึ่งจะเสริมให้ระดับยา Dormicum (Midazolam) สูงขึ้นและออกฤทธิ์นานขึ้น",
     reference:
@@ -114,7 +122,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "Monitor EKG เพราะ Azithromycin สามารถทำให้เกิด QT prolong ได้ และ Hydrocortisone อาจทำให้เกิดการอักเสบบริเวณที่ให้ยาได้",
+      "Monitor EKG เพราะ Azithromycin สามารถทำให้เกิด QT prolong ได้",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -132,7 +140,7 @@ export const mixingResults: MixingResult[] = [
     status: "caution",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS ทั้งนี้ขึ้นอยู่กับขนาดยา",
     precautions:
-      "Azithromycin 2 mg/mL + Piperacillin/Tazobactam 40 and 5 mg/mL in D5W = Compatible\nAzithromycin 2 mg/mL in NSS 0.9% + Piperacillin/Tazobactam 100 and 12.5 mg/mL in NSS 0.45% = Incompatible",
+      "Azithromycin 2 mg/mL + Piperacillin/Tazobactam 40 and 5 mg/mL in D5W = Compatible\nAzithromycin 2 mg/mL in NSS 0.9% + Piperacillin/Tazobactam 100 and 12.5 mg/mL in NSS = Incompatible",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -152,7 +160,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "ห้ามใช้ยา Adrenaline ที่ไม่ได้เจือจางฉีด IV, flush สายก่อนและหลังให้ยา, ระวัง Extravasation",
+      "ห้ามใช้ยา Adrenaline ที่ไม่ได้เจือจางฉีด IV, flush สายก่อนและหลังให้ยาม, ระวัง Extravasation",
     reference: "(คณะอนุกรรมการระบบยา โรงพยาบาลประจวบคีรีขันธ์, 2566)",
   },
   {
@@ -161,7 +169,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "ห้ามใช้ยา Adrenaline ที่ไม่ได้เจือจางฉีด IV, flush สายก่อนและหลังให้ยา, ระวัง Extravasation, ติดตามสัญญาณชีพอย่างใกล้ชิด",
+      "ห้ามใช้ยา Adrenaline ที่ไม่ได้เจือจางฉีด IV, flush สายก่อนและหลังให้ยาม, ระวัง Extravasation, ติดตามสัญญาณชีพอย่างใกล้ชิด",
     reference: "(คณะอนุกรรมการระบบยา โรงพยาบาลประจวบคีรีขันธ์, 2566)",
   },
   {
@@ -188,7 +196,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "ยา Domicum ควร Slow IV โดยให้ยานานอย่างน้อย 2-5 นาทีหรืออัตรา 1 มก. ต่อ 30 นาที, ควรให้ยาทาง infusion pump, การให้ยาขนาดสูงเกินไปหรือการฉีดยาเข้าหลอดเลือดดำเร็วเกินไป อาจทำให้กดการหายใจหรือ หัวใจหยุดเต้น, ระวัง Extravasation, ติดตาสัญญาณชีพอย่างใกล้ชิด",
+      "ยา Domicum ควร Slow IV โดยให้ยานานอย่างน้อย 2-5 นาที, ควรให้ยาทาง infusion pump, การให้ยาขนาดสูงเกินไปหรือการฉีดยาเข้าหลอดเลือดดำเร็วเกินไป อาจทำให้กดการหายใจหรือ หัวใจหยุดเต้น, ระวัง Extravasation, ติดตาสัญญาณชีพอย่างใกล้ชิด,",
     reference: "(คณะอนุกรรมการระบบยา โรงพยาบาลประจวบคีรีขันธ์, 2566)",
   },
   {
@@ -197,7 +205,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "ยา Fentanyl หากให้ยาทางหลอดเลือดดำเร็วเกินไปอาจมีผลข้างเคียงคือ Apnea หรือ respiratory paralysis ; Peak respiratory depression เกิดหลังจากฉีด 5-15 นาที และยา Adrenaline ควรให้ยาทาง infusion pump, ระวัง Extravasation, ติดตาสัญญาณชีพอย่างใกล้ชิด",
+      "ยา Fentanyl หากให้ยาทางหลอดเลือดดำเร็วเกินไปอาจมีผลข้างเคียงคือ Apnea หรือ respiratory paralysis ; Peak respiratory depression เกิดหลังจากฉีด 5-15 นาที และยา Adrenaline ควรให้ยาทาง infusion pump, ระวัง Extravasation, ติดตาสัญญาณชีพอย่างใกล้ชิด,",
     reference: "(คณะอนุกรรมการระบบยา โรงพยาบาลประจวบคีรีขันธ์, 2566)",
   },
   {
@@ -208,6 +216,15 @@ export const mixingResults: MixingResult[] = [
     precautions:
       "หากให้ยาพร้อมกันควรเฝ้าระวัง Severe hypertension, Cardiac arrhythmia, Hyperglycemia, Sodium and fluid retention, Extravasation ควรติดตามสัญญาณชีพอย่างใกล้ชิด",
     reference: "(คณะอนุกรรมการระบบยา โรงพยาบาลประจวบคีรีขันธ์, 2566)",
+  },
+  {
+    drug1Id: "1",
+    drug2Id: "10",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
+    precautions:
+      "หากให้ยาพร้อมกันควรเฝ้าระวัง Severe hypertension, Cardiac arrhythmia, Extravasation ควรติดตามสัญญาณชีพอย่างใกล้ชิด",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
     drug1Id: "1",
@@ -236,6 +253,15 @@ export const mixingResults: MixingResult[] = [
       "หากให้ยาพร้อมกันควรเฝ้าระวัง Severe hypertension, Hemodynamic instability, Cardiac arrhythmia, Altered tissue perfusion และ Extravasation ควรติดตามสัญญาณชีพอย่างใกล้ชิด",
     reference: "(คณะอนุกรรมการระบบยา โรงพยาบาลประจวบคีรีขันธ์, 2566)",
   },
+  {
+    drug1Id: "1",
+    drug2Id: "12",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
+    precautions:
+      "หากให้ยาพร้อมกันควรเฝ้าระวัง Severe hypertension, Cardiac arrhythmia, Extravasation ควรติดตามสัญญาณชีพอย่างใกล้ชิด",
+    reference: "-",
+  },
 
   // --- Ceftriaxone (4) ---
   {
@@ -244,7 +270,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "• เพิ่มความเสี่ยงในการแพ้ยา (ผื่น หายใจลำบาก)\n• เสี่ยงท้องเสียรุนแรงจากเชื้อดื้อยา\n• อาจทำให้เม็ดเลือดต่ำถ้าใช้ขนาดสูงหรือนาน",
+      "• เพิ่มความเสี่ยงในการแพ้ยา (ผื่น หายใจลำบาก)\n• เสี่ยงท้องเสียรุนแรงจากเชื้อดื้อยา\n• อาจทำให้เม็ดเลือดต่ำถ้าใช้ขนาดสูงหรือนาน **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -261,7 +287,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "• Dopamine อาจทำให้หัวใจเต้นเร็ว ความดันไม่คงที่\n• เสี่ยงเนื้อเยื่อเสียหายหากยารั่วออกนอกหลอดเลือด\n• ควรติดตามความดัน ชีพจร ใกล้ชิด",
+      "• Dopamine อาจทำให้หัวใจเต้นเร็ว ความดันไม่คงที่\n• เสี่ยงเนื้อเยื่อเสียหายหากยารั่วออกนอกหลอดเลือด\n• ควรติดตามความดัน ชีพจร ใกล้ชิด **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -270,7 +296,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "• Dormicum อาจทำให้ง่วงมาก กดการหายใจ ความดันต่ำ\n• ระวังในผู้ป่วยสูงอายุ/ไต-ตับบกพร่อง\n• ควรเฝ้าระวังการหายใจและระดับความรู้สึกตัว",
+      "• Dormicum อาจทำให้ง่วงมาก กดการหายใจ ความดันต่ำ\n• ระวังในผู้ป่วยสูงอายุ/ไต-ตับบกพร่อง\n• ควรเฝ้าระวังการหายใจและระดับความรู้สึกตัว **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -279,7 +305,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "• Fentanyl อาจทำให้กดการหายใจ ง่วงมาก ความดันต่ำ\n• เสี่ยงหัวใจเต้นช้า โดยเฉพาะให้เร็วหรือขนาดสูง\n• ควรเฝ้าระวังการหายใจ ชีพจร และความดันใกล้ชิด",
+      "• Fentanyl อาจทำให้กดการหายใจ ง่วงมาก ความดันต่ำ\n• เสี่ยงหัวใจเต้นช้า โดยเฉพาะให้เร็วหรือขนาดสูง\n• ควรเฝ้าระวังการหายใจ ชีพจร และความดันใกล้ชิด **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -288,7 +314,16 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "• Hydrocortisone อาจทำให้น้ำตาลสูง ความดันสูง บวมน้ำ\n• เสี่ยงติดเชื้อได้ง่ายขึ้นเมื่อใช้ steroid\n• ควรติดตามน้ำตาล ความดัน และอาการติดเชื้อ",
+      "• Hydrocortisone อาจทำให้น้ำตาลสูง ความดันสูง บวมน้ำ\n• เสี่ยงติดเชื้อได้ง่ายขึ้นเมื่อใช้ steroid\n• ควรติดตามน้ำตาล ความดัน และอาการติดเชื้อ **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
+  {
+    drug1Id: "4",
+    drug2Id: "10",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
+    precautions:
+      "เฝ้าระวังอาการแพ้ยา ภาวะท้องเสียรุนแรง ความผิดปกติของระบบประสาท ( meropenem)  **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -297,7 +332,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W",
     precautions:
-      "ตรวจวัด vital sign ทุก 30-60 นาที ให้ระดับความดันโลหิตอยู่ในระดับที่ต้องการตามที่แพทย์ระบุ",
+      "ตรวจวัด vital sign ทุก 30-60 นาที ให้ระดับความดันโลหิตอยู่ในระดับที่ต้องการตามที่แพทย์ระบุ **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -306,7 +341,7 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W",
     precautions:
-      "• Propofol อาจทำให้ความดันต่ำ กดการหายใจ\n• เสี่ยงหัวใจเต้นช้า โดยเฉพาะให้เร็วหรือขนาดสูง\n• ควรติดตามความดัน ชีพจร และการหายใจใกล้ชิด",
+      "• Propofol อาจทำให้ความดันต่ำ กดการหายใจ\n• เสี่ยงหัวใจเต้นช้า โดยเฉพาะให้เร็วหรือขนาดสูง\n• ควรติดตามความดัน ชีพจร และการหายใจใกล้ชิด **ห้ามผสมในสารน้ำ Acetar และ Ringer-acetate solution",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -366,6 +401,15 @@ export const mixingResults: MixingResult[] = [
   },
   {
     drug1Id: "3",
+    drug2Id: "10",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
+    precautions:
+      "สังเกตอาการแพ้ยา ฝ้าระวังอาการทางระบบประสาท เช่น ซึม สับสน ชัก เฝ้าระวัง phlebitis และติดตามสัญญาณชีพอย่างใกล้ชิด",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
+  {
+    drug1Id: "3",
     drug2Id: "13",
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W",
@@ -375,10 +419,19 @@ export const mixingResults: MixingResult[] = [
   },
   {
     drug1Id: "3",
-    drug2Id: "12",
+    drug2Id: "14",
     status: "incompatible",
     nursingCare: "-",
     precautions: "-",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
+  {
+    drug1Id: "3",
+    drug2Id: "12",
+    status: "caution",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W",
+    precautions:
+      "Cisatracurium 5 mg/ml + Ceftazidime 40 mg/ml = Incompatible Cisatracurium 0.1 mg/ml, 2 mg/ml in D5W + Ceftazidime 40 mg/ml in D5W = Compatible",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
 
@@ -413,6 +466,14 @@ export const mixingResults: MixingResult[] = [
   {
     drug1Id: "5",
     drug2Id: "9",
+    status: "incompatible",
+    nursingCare: "-",
+    precautions: "-",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
+  {
+    drug1Id: "5",
+    drug2Id: "10",
     status: "incompatible",
     nursingCare: "-",
     precautions: "-",
@@ -479,7 +540,16 @@ export const mixingResults: MixingResult[] = [
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions:
-      "• Dopamine อาจทำให้หัวใจเต้นเร็ว ความดันแกว่ง\n• Hydrocortisone อาจทำให้น้ำตาลสูง บวมน้ำ ความดันสูง\n• ควรติดตามความดัน ชีพจร และระดับน้ำตาลใกล้ชิด",
+      "• Dopamine อาจทำให้หัวใจเต้นเร็ว ความดันไม่คงที่\n• Hydrocortisone อาจทำให้น้ำตาลสูง บวมน้ำ ความดันสูง\n• ควรติดตามความดัน ชีพจร และระดับน้ำตาลใกล้ชิด",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
+  {
+    drug1Id: "6",
+    drug2Id: "10",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: NSS",
+    precautions:
+      "เฝ้าระวังความดันโลหิตและอัตราการเต้นของหัวใจจาก Dopamine รวมถึงอาการแพ้ยาและการทำงานของไตจาก Meropenem",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
   {
@@ -517,17 +587,8 @@ export const mixingResults: MixingResult[] = [
     precautions: "Dopamine อาจทำให้หัวใจเต้นเร็ว ความดันไม่คงที่",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
-  {
-    drug1Id: "6",
-    drug2Id: "10",
-    status: "compatible",
-    nursingCare: "สารน้ำที่ใช้ได้: NSS",
-    precautions:
-      "เฝ้าระวังความดันโลหิตและอัตราการเต้นของหัวใจจาก Dopamine รวมถึงอาการแพ้ยาและการทำงานของไตจาก Meropenem",
-    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
-  },
 
-  // --- Dormicum (7) ---
+  // --- Midazolam (7) ---
   {
     drug1Id: "7",
     drug2Id: "8",
@@ -564,6 +625,15 @@ export const mixingResults: MixingResult[] = [
   },
   {
     drug1Id: "7",
+    drug2Id: "14",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W",
+    precautions:
+      "อาจทำให้้กดการหายใจ ความดันโลหิตต่ำรุนแรง และหัวใจเต้นผิดจังหวะ",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
+  {
+    drug1Id: "7",
     drug2Id: "15",
     status: "incompatible",
     nursingCare: "-",
@@ -583,6 +653,14 @@ export const mixingResults: MixingResult[] = [
   {
     drug1Id: "8",
     drug2Id: "9",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
+    precautions: "ถ้ามีอาการปวด บวม แดง บริเวณ ที่ให้ยา ให้แจ้งพยาบาลทันที",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
+  {
+    drug1Id: "8",
+    drug2Id: "10",
     status: "compatible",
     nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
     precautions: "ถ้ามีอาการปวด บวม แดง บริเวณ ที่ให้ยา ให้แจ้งพยาบาลทันที",
@@ -623,6 +701,14 @@ export const mixingResults: MixingResult[] = [
   },
 
   // --- Hydrocortisone (9) ---
+  {
+    drug1Id: "9",
+    drug2Id: "10",
+    status: "compatible",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
+    precautions: "อาจทำให้ผิวบาง บวมน้ำ ความดันสูง หรือน้ำตาลในเลือดสูงได้",
+    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
+  },
   {
     drug1Id: "9",
     drug2Id: "13",
@@ -675,14 +761,6 @@ export const mixingResults: MixingResult[] = [
     precautions: "ห้ามใช้ในผู้ป่วยที่มีอาการแพ้ยาในกลุ่มคาร์บาเพเนม",
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
-  {
-    drug1Id: "10",
-    drug2Id: "12",
-    status: "compatible",
-    nursingCare: "สารน้ำที่ใช้ได้: D5W, NSS",
-    precautions: "ห้ามใช้ในผู้ป่วยที่มีอาการแพ้ยาในกลุ่มคาร์บาเพเนม",
-    reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
-  },
 
   // --- Norepinephrine (13) ---
   {
@@ -723,13 +801,14 @@ export const mixingResults: MixingResult[] = [
     reference: "(โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ, 2561)",
   },
 
-  // --- Tazocin (15) ---
+  // --- Piperacillin+Tazobactam (15) ---
   {
     drug1Id: "15",
     drug2Id: "12",
-    status: "incompatible",
-    nursingCare: "-",
-    precautions: "-",
+    status: "caution",
+    nursingCare: "สารน้ำที่ใช้ได้: D5W",
+    precautions:
+      "Cisatracurium 0.1 mg, 2 mg/ml in D5W + Piperacillin/Tazobactam 40 mg/ml of Pipercillin in D5W = Compatible",
     reference: "(กลุ่มงานเภสัชกรรมโรงพยาบาลนพรัตนราชธานี, 2562)",
   },
 ];
@@ -747,14 +826,13 @@ export function findMixingResult(
 
   if (result) return result;
 
+  // สำหรับคู่ยาที่ไม่มีข้อมูล (No Data ในตาราง) จะตกมาเข้าเงื่อนไขนี้อัตโนมัติ
   return {
     drug1Id,
     drug2Id,
     status: "limited_data",
-    precautions:
-      "ยังไม่มีข้อมูลเพียงพอเกี่ยวกับการผสมยาคู่นี้ กรุณาปรึกษาเภสัชกรก่อนใช้ร่วมกัน",
-    nursingCare:
-      "สังเกตอาการผิดปกติหลังให้ยา ตรวจสอบสารละลายว่ามีการเปลี่ยนแปลงสี ความขุ่น หรือตะกอนหรือไม่ บันทึกและรายงานอาการผิดปกติทุกชนิด",
-    reference: "-", // กรณี Default ที่ไม่มีในตารางจะส่งกลับเป็น "-"
+    precautions: "",
+    nursingCare: "",
+    reference: "-",
   };
 }
